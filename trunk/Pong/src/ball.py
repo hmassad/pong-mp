@@ -1,7 +1,7 @@
-
 import pyglet
 import configuration
 
+# clase que modela la pelota 
 class Ball(pyglet.sprite.Sprite):
 
     def __init__(self, x, y, batch):
