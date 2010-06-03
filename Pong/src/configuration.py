@@ -1,7 +1,7 @@
 
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
-WINDOW_CAPTION = "MPong: Multiplayer Pong, un trabajito, asi noma'"
+WINDOW_CAPTION = "pong-mp"
 COURT_WIDTH =  800
 COURT_HEIGHT = 500
 
