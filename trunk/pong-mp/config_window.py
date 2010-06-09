@@ -19,18 +19,27 @@ class ConfigWindow(BaseWindow):
         self.servidorTextBox = TextBox(self, 200, 60, self.width - 210, 20, 'Servidor', (255, 255, 255, 255), (0, 0, 0, 255))
         self.controls.append(self.servidorTextBox)
         
-        self.acceptButton = Button(self, 200, 20, self.width - 210, 20, 'Conectarse', (204, 204, 204, 204), (0, 0, 0, 255))
-        self.controls.append(self.acceptButton)
-        self.acceptButton.click = self.acceptButton_click
+        self.serveButton = Button(self, (self.width - 30) / 2 + 20, 20, (self.width - 30) / 2, 20, 'Crear Servidor', (204, 204, 204, 255), (0, 0, 0, 255))
+        self.controls.append(self.serveButton)
+        self.serveButton.click = self.serveButton_click
+
+        self.joinButton = Button(self, 10, 20, (self.width - 30) / 2, 20, 'Conectar a Servidor', (204, 204, 204, 255), (0, 0, 0, 255))
+        self.controls.append(self.joinButton)
+        self.joinButton.click = self.joinButton_click
 
         self.application.http_client = None
 
-    def acceptButton_click(self):
-        # conectarse al servidor
+    def serveButton_click(self):
+        # crear un servidor
         # abrir ventana de juego
         GameWindow(self.application)
         self.close()
     
+    def joinButton_click(self):
+        # conectar a un servidor
+        self.server_connected()
+    
     def server_connected(self):
         # abrir pantalla de juego
-        pass
+        GameWindow(self.application)
+        self.close()

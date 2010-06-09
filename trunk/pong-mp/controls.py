@@ -65,6 +65,9 @@ class BaseWindow(pyglet.window.Window):
 
         elif symbol == pyglet.window.key.ESCAPE:
             pyglet.app.exit()
+        else:
+            if self.focused_control:
+                self.focused_control.on_key_press(symbol, modifiers)
 
     def set_focus(self, control):
         if self.focused_control:
@@ -99,6 +102,7 @@ class Control(object):
     def on_text(self, text): pass
     def on_text_motion(self, motion): pass
     def on_text_motion_select(self, motion): pass
+    def on_key_press(self, symbol, modifiers): pass
     def on_focus(self, value): pass
     
 class TextBox(Control):
@@ -149,3 +153,8 @@ class Button(Control):
     def on_mouse_press(self, x, y, button, modifiers):
         if self.click:
             self.click()
+
+    def on_key_press(self, symbol, modifiers):
+        if symbol == pyglet.window.key.RETURN:
+            if self.click:
+                self.click()
