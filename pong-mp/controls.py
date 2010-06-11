@@ -4,11 +4,16 @@ import pyglet
 
 class BaseWindow(pyglet.window.Window):
     def __init__(self, application, width, height, caption):
+        pyglet.gl.glShadeModel(pyglet.gl.GL_SMOOTH)
         self.application = application
         self.batch = pyglet.graphics.Batch()
         self.controls = []
         self.focused_control = None
         pyglet.window.Window.__init__(self, width=width, height=height, caption=caption)
+        self.set_location((self.screen.width - self.width) / 2, (self.screen.height - self.height) / 2)
+        
+        self.keymap = pyglet.window.key.KeyStateHandler()
+        self.push_handlers(self.keymap)
 
     def on_draw(self):
         self.clear()
@@ -69,6 +74,9 @@ class BaseWindow(pyglet.window.Window):
             if self.focused_control:
                 self.focused_control.on_key_press(symbol, modifiers)
 
+    def on_key_release(self, symbol, modifiers):
+        pass
+        
     def set_focus(self, control):
         if self.focused_control:
             self.focused_control.on_focus(False)
@@ -85,9 +93,12 @@ class Control(object):
         self.height = height
         self.mouse_cursor = None
 
+        self.draw(background_color, foreground_color)
+
+    def draw(self, background_color, foreground_color):
         # Rectangulo del fondo del control
         self.parent_window.batch.add(4, pyglet.gl.GL_QUADS, None,
-            ('v2i', [self.x - 2, self.y - 2, x + self.width + 2, self.y - 2, x + self.width + 2, self.y + self.height + 2, self.x - 2, self.y + self.height + 2]),
+            ('v2i', [self.x - 2, self.y - 2, self.x + self.width + 2, self.y - 2, self.x + self.width + 2, self.y + self.height + 2, self.x - 2, self.y + self.height + 2]),
             ('c4B', [background_color[0], background_color[1], background_color[2], background_color[3]] * 4)
         )
 
@@ -149,6 +160,13 @@ class Button(Control):
         Control.__init__(self, parent_window, x, y, width, height, background_color, foreground_color)
         self.label = pyglet.text.Label(text=text, x=self.x + self.width / 2, y=self.y + self.height / 2, width=width, height=height, anchor_x='center', anchor_y='center', color=foreground_color, batch=self.parent_window.batch)
         self.click = None
+
+    def draw(self, background_color, foreground_color):
+        # Rectangulo del fondo del control
+        self.parent_window.batch.add(4, pyglet.gl.GL_QUADS, None,
+            ('v2i', [self.x - 2, self.y - 2, self.x + self.width + 2, self.y - 2, self.x + self.width + 2, self.y + self.height + 2, self.x - 2, self.y + self.height + 2]),
+            ('c4B', [background_color[0], background_color[1], background_color[2], background_color[3]] * 4)
+        )
 
     def on_mouse_press(self, x, y, button, modifiers):
         if self.click:
