@@ -1,5 +1,5 @@
 ''' sockets '''
-from socket import socket, AF_INET, SOCK_STREAM, error
+from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread
 from time import sleep
 
@@ -12,22 +12,22 @@ class SocketListener(Thread):
 
     def run(self):
         self.terminated = False
-        full_message = ''
+        data = ''
         # Para http. Si llega un "enter enter", se termino el mensaje
         while not self.terminated:
-            if (len(full_message) > 2) and (full_message[-4:len(full_message)] == '\r\n\r\n'):
-                if self.on_receive:
-                    self.on_receive(full_message)
-                full_message = ''
             try:
-                full_message += self.socket.recv(65535)
+                data += self.socket.recv(65535)
+                if (len(data) > 2) and (data[-4:len(data)] == '\r\n\r\n'):
+                    if self.on_receive:
+                        self.on_receive(data)
+                    data = ''
             except:
                 if self.on_error and not self.terminated:
                     self.on_error()
                 break
 
     
-class ClientSocket:
+class TCPClientSocket:
 
     def __init__(self, serverip, serverport):
         self.serverip = serverip;
@@ -59,7 +59,7 @@ class ClientSocket:
         # matar thread
         self.socket.close()
         while self.socket_listener and self.socket_listener.isAlive():
-            self.socket_listener.closed = True
+            self.socket_listener.terminated = True
             self.socket_listener.join(1)
             
         if self.on_disconnected:
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     def cs_received(msj):
         print '--- response begin ---\n', msj, '\n--- response end ---'
         
-    cs = ClientSocket('www.example.com', 80)
+    cs = TCPClientSocket('www.example.com', 80)
     cs.on_connected = cs_connected
     cs.on_disconnected = cs_disconnected
     cs.on_error = cs_error
