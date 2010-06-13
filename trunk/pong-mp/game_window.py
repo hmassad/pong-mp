@@ -30,3 +30,12 @@ class GameWindow(BaseWindow):
             self.key_label.text = 'KEY: DOWN'
         else:
             self.key_label.text = 'KEY: Ninguna'
+        
+    def draw_snapshot(self, ballX, ballY, timecode, player1Position, player2Position, player1Score, player2Score):
+        self.paddle1.y = player1Position
+        self.paddle2.y = player2Position
+        self.ball.x = ballX
+        self.ball.y = ballY
+        
+        
+        
