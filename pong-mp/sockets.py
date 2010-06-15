@@ -1,108 +1,113 @@
 ''' sockets '''
-from socket import socket, AF_INET, SOCK_STREAM
-from threading import Thread
-from time import sleep
+import socket
+import threading
+import Queue
+import pyglet
 
-class SocketListener(Thread):
-    def __init__(self, socket):
-        Thread.__init__(self)
+GLOBAL_WAITING_INTERVAL = (1/20.)
+
+class TCPSocketListener(threading.Thread):
+    def __init__(self, socket, queue):
+        threading.Thread.__init__(self)
         self.socket = socket
-        self.on_receive = None
-        self.on_error = None
-
+        self.queue = queue
+        
     def run(self):
         self.terminated = False
-        data = ''
-        # Para http. Si llega un "enter enter", se termino el mensaje
         while not self.terminated:
             try:
-                data += self.socket.recv(65535)
-                if (len(data) > 2) and (data[-4:len(data)] == '\r\n\r\n'):
-                    if self.on_receive:
-                        self.on_receive(data)
-                    data = ''
-            except:
-                if self.on_error and not self.terminated:
-                    self.on_error()
+                data = self.socket.recv(65535)
+                if not data:
+                    self.queue.put(None)
+                self.queue.put(data)
+            except socket.timeout:
+                pass
+            except socket.error:
+                if not self.terminated:
+                    self.queue.put(None)
                 break
 
-    
 class TCPClientSocket:
 
-    def __init__(self, serverip, serverport):
-        self.serverip = serverip;
-        self.serverport = serverport;
-        
+    def __init__(self, server_ip, server_port):
+        self.server_ip = server_ip;
+        self.server_port = server_port;
+
+        self.socket = None
         self.socket_listener = None
         
         # events
         self.on_connected = None
-        self.on_disconnected = None
+        self.on_closed = None
         self.on_error = None
         self.on_sent = None
         self.on_received = None
-
-    def connect(self):
-        self.socket = socket(AF_INET, SOCK_STREAM)
-        self.socket.settimeout(2)
-        self.socket.connect((self.serverip, self.serverport))
-
-        self.socket_listener = SocketListener(self.socket)
-        self.socket_listener.on_receive = self.socket_listener_receive
-        self.socket_listener.on_error = self.socket_listener_error
-        self.socket_listener.start()
         
-        if self.on_connected:
-            self.on_connected()
-    
-    def disconnect(self):
-        # matar thread
-        self.socket.close()
+        self.queue = None
+        self.timer = None
+        
+    def open(self):
+        if not self.socket:
+            try:
+                self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.socket.settimeout(GLOBAL_WAITING_INTERVAL)
+                self.socket.connect((self.server_ip, self.server_port))
+            except:
+                if self.on_error:
+                    self.on_error('No se puede conectar al servidor')
+                return
+        
+            self.queue = Queue.Queue(10)
+            
+            pyglet.clock.schedule_once(self.on_timer, GLOBAL_WAITING_INTERVAL)
+
+            self.socket_listener = TCPSocketListener(self.socket, self.queue)
+            self.socket_listener.start()
+            
+            if self.on_connected:
+                self.on_connected()
+
+    def kill_listener_thread(self):
         while self.socket_listener and self.socket_listener.isAlive():
             self.socket_listener.terminated = True
-            self.socket_listener.join(1)
-            
-        if self.on_disconnected:
-            self.on_disconnected()
+            self.socket_listener.join(GLOBAL_WAITING_INTERVAL)
+        self.socket_listener = None
+        
+    def close(self):
+        pyglet.clock.unschedule(self.on_timer)
+
+        if self.socket:
+            self.kill_listener_thread()
+            self.socket.close()
+            self.socket = None
+                
+            if self.queue:
+                self.queue = None
 
     def send(self, mensaje):
-        self.socket.send(mensaje)
-        if self.on_sent:
-            self.on_sent()
+        if self.socket:
+            self.socket.send(mensaje)
+            if self.on_sent:
+                self.on_sent()
+        else:
+            if self.on_error:
+                self.on_error()
 
-    def socket_listener_error(self):
-        if self.on_error:
-            self.on_error()
-
-    def socket_listener_receive(self, data):
-        if self.on_received:
-            self.on_received(data)
-
-''' pruebas '''
-if __name__ == '__main__':
-    def cs_connected():
-        print 'socket connected'
-    def cs_disconnected():
-        print 'socket disconnected'
-    def cs_error():
-        print 'socket error'
-    def cs_sent():
-        print 'request sent'
-    def cs_received(msj):
-        print '--- response begin ---\n', msj, '\n--- response end ---'
-        
-    cs = TCPClientSocket('www.example.com', 80)
-    cs.on_connected = cs_connected
-    cs.on_disconnected = cs_disconnected
-    cs.on_error = cs_error
-    cs.on_sent = cs_sent
-    cs.on_received = cs_received
-    
-    cs.connect()
-    #httpclient.enviar('GET /search?q=hernan HTTP/1.1\nHost: www.google.com\nUser-Agent: Mozilla/4.0\nContent-Length: 8\nContent-Type: application/x-www-form-urlencoded\n\nq=hernan\n\n')
-    #cs.send('GET /search?q=hernan HTTP/1.1\nHost: www.google.com\nUser-Agent: Mozilla/4.0\nContent-Length: 0\n\n')
-    cs.send('GET / HTTP/1.1\r\nHost: www.example.com\r\nUser-Agent: Mozilla/4.0\r\n\r\n')
-    cs.send('GET / HTTP/1.1\r\nHost: www.example.com\r\nUser-Agent: Mozilla/4.0\r\n\r\n')
-    cs.send('GET / HTTP/1.1\r\nHost: www.example.com\r\nUser-Agent: Mozilla/4.0\r\n\r\n')
-    sleep(1)
-    cs.disconnect()
+    def on_timer(self, dt):
+        pyglet.clock.unschedule(self.on_timer)
+        if not self.queue:
+            return
+        while not self.queue.empty():
+            data = self.queue.get(False)
+            if not data:
+                self.kill_listener_thread()
+                
+                self.socket.close()
+                self.socket = None
+                
+                if self.on_closed:
+                    self.on_closed()
+                break
+            if self.on_received:
+                self.on_received(data) 
+        pyglet.clock.schedule_once(self.on_timer, dt)

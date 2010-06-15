@@ -6,8 +6,9 @@ import ball
 import paddle
 
 class GameWindow(BaseWindow):
-    def __init__(self, application):
-        BaseWindow.__init__(self, application, width=800, height=600, caption='pong-mp')
+
+    def __init__(self):
+        BaseWindow.__init__(self, width=800, height=600, caption='pong-mp')
 
         # enviar ready al servidor
         pyglet.clock.schedule_interval(self.update, 1 / 20.)
@@ -18,6 +19,9 @@ class GameWindow(BaseWindow):
         self.ball = ball.Ball(self.width / 2, self.height / 2, 8, self.batch)
         self.paddle1 = paddle.Paddle(4, self.height / 2, 8, 64, self.batch)
         self.paddle2 = paddle.Paddle(self.width - 4, self.height / 2, 8, 64, self.batch)
+        
+        # eventos
+        self.on_updated = None
 
     def update(self, dt):
         # aplicar cambios de posicion de paletas y pelota
@@ -26,16 +30,21 @@ class GameWindow(BaseWindow):
         self.dt_label.text = 'DT: %f' % dt
         if self.keymap[pyglet.window.key.UP]:
             self.key_label.text = 'KEY: UP'
+            if self.on_update:
+                self.on_updated('UP')
         elif self.keymap[pyglet.window.key.DOWN]:
             self.key_label.text = 'KEY: DOWN'
+            if self.on_update:
+                self.on_updated('DOWN')
         else:
             self.key_label.text = 'KEY: Ninguna'
+            if self.on_update:
+                self.on_updated('NONE')
         
-    def draw_snapshot(self, ballX, ballY, timecode, player1Position, player2Position, player1Score, player2Score):
-        self.paddle1.y = player1Position
-        self.paddle2.y = player2Position
-        self.ball.x = ballX
-        self.ball.y = ballY
-        
-        
-        
+    def draw_snapshot(self, b_x, b_y, p1_x, p1_y, p2_x, p2_y):
+        self.ball.x = b_x
+        self.ball.y = b_y
+        self.paddle1.x = p1_x
+        self.paddle1.y = p1_y
+        self.paddle2.x = p2_x
+        self.paddle2.y = p2_y
