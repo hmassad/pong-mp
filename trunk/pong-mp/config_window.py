@@ -2,44 +2,46 @@
 
 import pyglet
 from controls import BaseWindow, TextBox, Button
-from game_window import GameWindow
 
 class ConfigWindow(BaseWindow):
-    def __init__(self, application):
-        BaseWindow.__init__(self, application, width=400, height=140, caption='Configuracion')
+    def __init__(self):
+        BaseWindow.__init__(self, width=400, height=140, caption='Configuracion')
 
-        self.labels = [
-            pyglet.text.Label('Jugador', x=10, y=100, anchor_y='bottom', color=(255, 255, 255, 255), batch=self.batch),
-            pyglet.text.Label('Servidor', x=10, y=60, anchor_y='bottom', color=(255, 255, 255, 255), batch=self.batch)
-        ]
+        # eventos
+        self.on_configured = None
         
-        self.jugadorTextBox = TextBox(self, 200, 100, self.width - 210, 20, 'Jugador', (255, 255, 255, 255), (0, 0, 0, 255))
-        self.controls.append(self.jugadorTextBox)
+        # controles
+        self.player_name_label = pyglet.text.Label('Jugador', x=10, y=100, anchor_y='bottom', color=(255, 255, 255, 255), batch=self.batch)
+
+        self.server_address_label = pyglet.text.Label('Servidor', x=10, y=60, anchor_y='bottom', color=(255, 255, 255, 255), batch=self.batch)
         
-        self.servidorTextBox = TextBox(self, 200, 60, self.width - 210, 20, 'Servidor', (255, 255, 255, 255), (0, 0, 0, 255))
-        self.controls.append(self.servidorTextBox)
+        self.message_label = pyglet.text.Label('', x=10, y=140, anchor_y='bottom', color=(255, 255, 255, 255), batch=self.batch)
         
-        self.serveButton = Button(self, (self.width - 30) / 2 + 20, 20, (self.width - 30) / 2, 20, 'Crear Servidor', (204, 204, 204, 255), (0, 0, 0, 255))
-        self.controls.append(self.serveButton)
-        self.serveButton.click = self.serveButton_click
+        self.player_name_textbox = TextBox(self, 200, 100, self.width - 210, 20, 'Jugador1', (255, 255, 255, 255), (0, 0, 0, 255))
+        self.controls.append(self.player_name_textbox)
+        
+        self.server_address_textbox = TextBox(self, 200, 60, self.width - 210, 20, 'localhost', (255, 255, 255, 255), (0, 0, 0, 255))
+        self.controls.append(self.server_address_textbox)
+        
+        self.join_button = Button(self, (self.width - 30) / 2 + 20, 20, (self.width - 30) / 2, 20, 'Conectar a Servidor', (204, 204, 204, 255), (0, 0, 0, 255))
+        self.controls.append(self.join_button)
+        self.join_button.click = self.join_button_click
 
-        self.joinButton = Button(self, 10, 20, (self.width - 30) / 2, 20, 'Conectar a Servidor', (204, 204, 204, 255), (0, 0, 0, 255))
-        self.controls.append(self.joinButton)
-        self.joinButton.click = self.joinButton_click
+    def show_info(self, message):
+        self.height = 180
+        self.message_label.color = (0, 0, 255, 255) # azul
+        self.message_label.text = message
 
-        self.application.http_client = None
+    def show_warn(self, message):
+        self.height = 180
+        self.message_label.color = (255, 242, 0, 255) # amarillo
+        self.message_label.text = message
 
-    def serveButton_click(self):
-        # crear un servidor
-        # abrir ventana de juego
-        GameWindow(self.application)
-        self.close()
-    
-    def joinButton_click(self):
-        # conectar a un servidor
-        self.server_connected()
-    
-    def server_connected(self):
-        # abrir pantalla de juego
-        GameWindow(self.application)
-        self.close()
+    def show_error(self, message):
+        self.height = 180
+        self.message_label.color = (255, 0, 0, 255) # rojo
+        self.message_label.text = message
+
+    def join_button_click(self):
+        if self.on_configured:
+            self.on_configured(self.player_name_textbox.text, self.server_address_textbox.text)

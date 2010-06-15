@@ -3,9 +3,10 @@
 import pyglet
 
 class BaseWindow(pyglet.window.Window):
-    def __init__(self, application, width, height, caption):
+    #def __init__(self, application, width, height, caption):
+    def __init__(self, width, height, caption):
         pyglet.gl.glShadeModel(pyglet.gl.GL_SMOOTH)
-        self.application = application
+        #self.application = application
         self.batch = pyglet.graphics.Batch()
         self.controls = []
         self.focused_control = None
@@ -14,6 +15,8 @@ class BaseWindow(pyglet.window.Window):
         
         self.keymap = pyglet.window.key.KeyStateHandler()
         self.push_handlers(self.keymap)
+        
+        self.on_closed = None
 
     def on_draw(self):
         self.clear()
@@ -83,6 +86,11 @@ class BaseWindow(pyglet.window.Window):
         self.focused_control = control
         if self.focused_control:
             self.focused_control.on_focus(True)
+
+    def on_close(self):
+        pyglet.window.Window.on_close(self)
+        if self.on_closed:
+            self.on_closed()
             
 class Control(object):
     def __init__(self, parent_window, x, y, width, height, background_color, foreground_color):
@@ -155,6 +163,18 @@ class TextBox(Control):
             self.caret.mark = 0
             self.caret.position = len(self.document.text)
 
+    def text(): #@NoSelf
+        doc = """Text""" #@UnusedVariable
+       
+        def fget(self):
+            return self.document.text
+           
+        def fset(self, value):
+            self.document.text = value
+           
+        return locals()
+    text = property(**text())
+
 class Button(Control):
     def __init__(self, parent_window, x, y, width, height, text, background_color, foreground_color):
         Control.__init__(self, parent_window, x, y, width, height, background_color, foreground_color)
@@ -176,3 +196,8 @@ class Button(Control):
         if symbol == pyglet.window.key.RETURN:
             if self.click:
                 self.click()
+
+class Label(Control):
+    def __init__(self, parent_window, x, y, width, height, text, background_color, foreground_color):
+        Control.__init__(self, parent_window, x, y, width, height, background_color, foreground_color)
+        self.label = pyglet.text.Label(text=text, x=x, y=y, width=width, height=height, anchor_x='center', anchor_y='center', color=foreground_color, batch=self.parent_window.batch)
