@@ -16,7 +16,7 @@ class BaseWindow(pyglet.window.Window):
         self.keymap = pyglet.window.key.KeyStateHandler()
         self.push_handlers(self.keymap)
         
-        self.on_closed = None
+        self.on_disconnected = None
 
     def on_draw(self):
         self.clear()
@@ -89,8 +89,8 @@ class BaseWindow(pyglet.window.Window):
 
     def on_close(self):
         pyglet.window.Window.on_close(self)
-        if self.on_closed:
-            self.on_closed()
+        if self.on_disconnected:
+            self.on_disconnected()
             
 class Control(object):
     def __init__(self, parent_window, x, y, width, height, background_color, foreground_color):

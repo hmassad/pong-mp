@@ -2,8 +2,43 @@
 
 from controls import BaseWindow
 import pyglet
-import ball
-import paddle
+
+'''  clase que modela la pelota ''' 
+class Ball(pyglet.sprite.Sprite):
+
+    def __init__(self, x, y, diameter, batch):
+        self.diameter = diameter
+        
+        ''' # crear la forma de la pelota, cambiar por una imagen '''
+        pattern = pyglet.image.SolidColorImagePattern((255, 0, 0, 255))
+        image = pyglet.image.create(self.diameter, self.diameter, pattern)
+
+        ''' hacer que el anchor este en el centro de la pelota (calculo de retorno de pelota) '''
+        image.anchor_x, image.anchor_y = self.diameter / 2, self.diameter / 2
+        
+        self.vx = self.vy = 0
+
+        ''' constructor base '''
+        pyglet.sprite.Sprite.__init__(self, image, batch=batch)
+        
+        self.x = x
+        self.y = y
+
+''' clase que modela la paleta ''' 
+class Paddle(pyglet.sprite.Sprite):
+
+    def __init__(self, x, y, width, height, batch):
+
+        ''' crear la forma de la paleta, cambiar por una imagen '''
+        pattern = pyglet.image.SolidColorImagePattern((255, 255, 255, 255))
+        image = pyglet.image.create(width, height, pattern)
+
+        ''' hacer que el anchor este en el centro de la paleta (calculo de retorno de pelota) '''
+        image.anchor_x = width / 2
+        image.anchor_y = height / 2
+
+        ''' constructor base '''
+        pyglet.sprite.Sprite.__init__(self, image, x, y, batch=batch)
 
 class GameWindow(BaseWindow):
 
@@ -16,9 +51,9 @@ class GameWindow(BaseWindow):
         self.key_label = pyglet.text.Label(text='KEY: Ninguna', x=0, y=20, anchor_x='left', anchor_y='bottom', batch=self.batch)
         self.dt_label = pyglet.text.Label(text='DT: 0', x=0, y=40, anchor_x='left', anchor_y='bottom', batch=self.batch)
         
-        self.ball = ball.Ball(self.width / 2, self.height / 2, 8, self.batch)
-        self.paddle1 = paddle.Paddle(4, self.height / 2, 8, 64, self.batch)
-        self.paddle2 = paddle.Paddle(self.width - 4, self.height / 2, 8, 64, self.batch)
+        self.ball = Ball(self.width / 2, self.height / 2, 8, self.batch)
+        self.paddle1 = Paddle(4, self.height / 2, 8, 64, self.batch)
+        self.paddle2 = Paddle(self.width - 4, self.height / 2, 8, 64, self.batch)
         
         # eventos
         self.on_updated = None
