@@ -3,19 +3,20 @@
 import sockets
 import client_server_interpreter
 import pyglet
+import game
 
-class Player():
+class Client():
     def __init__(self, token):
         self.token = token
         self.name = None
-        self.paddle_position_x = 0
-        self.paddle_position_y = 0
-        
+        self.paddle_index = None
+
 class PongMpServer():
-    GLOBAL_WAITING_TIME = (1 / 20.)
+    GLOBAL_WAITING_TIME = (1/60.)
 
     def __init__(self):
-        self.players = []
+        self.game = None
+        self.clients = []
 
         self.socket_server = sockets.TCPServer(8888, self.GLOBAL_WAITING_TIME)
 
@@ -35,26 +36,32 @@ class PongMpServer():
         
         self.socket_server.open()
         
-        pyglet.clock.schedule_once(self.update, self.GLOBAL_WAITING_TIME)
-    
+        pyglet.clock.schedule_interval(self.update, 1/60.)
+
     def interpreter_client_register(self, token, name):
-        player = None
-        for player in self.players:
-            if player.token == token:
-                player.name = name
+        client = None
+        for client in self.clients:
+            if client.token == token:
+                client.name = name
                 break
         
-        if len(self.players) < 2:
+        if len(self.clients) < 2:
             self.socket_server.send(token, self.interpreter.build_wait_for_opponent())
-        elif len(self.players) == 2:
-            self.socket_server.send(self.players[0].token, self.interpreter.build_game_starting('left', self.players[1].name))
-            self.socket_server.send(self.players[1].token, self.interpreter.build_game_starting('right', self.players[0].name))
+        elif len(self.clients) == 2:
+            self.clients[0].paddle_index = 0
+            self.clients[1].paddle_index = 1
+            self.game = game.Game(self.clients[0].name, self.clients[1].name)
+            self.socket_server.send(self.clients[0].token, self.interpreter.build_game_starting(side='left', opponent=self.clients[1].name))
+            self.socket_server.send(self.clients[1].token, self.interpreter.build_game_starting(side='right', opponent=self.clients[0].name))
 
     def interpreter_client_update(self, token, direction):
-        print 'interpreter_client_update, direction = ', direction
-
-    def dispose(self):
-        self.socket_server.close()
+        client = None
+        for i in range(len(self.clients)):
+            if self.clients[i].token == token:
+                client = self.clients[i]
+                break
+        if client:
+            self.game.update_paddle_direction(client.paddle_index, direction)
 
     def socket_server_opened(self):
         print 'socket server opened'
@@ -70,33 +77,37 @@ class PongMpServer():
 
     def socket_server_client_connected(self, token):
         print 'socket_server_client_connected, token = ', token
-        player = Player(token)
-        self.players.append(player)
+        client = Client(token)
+        self.clients.append(client)
     
     def socket_server_client_disconnected(self, token):
-        for i in range(len(self.players)):
-            if self.players[i].token == token:
-                del self.players[i]
+        for i in range(len(self.clients)):
+            if self.clients[i].token == token:
+                self.clients.remove(self.clients[i])
+                break
         print 'socket_server_client_disconnected, token = ', token
     
     def socket_server_client_sent(self, token):
-        print 'socket server sent, token = %s' % token
+        #print 'socket server sent, token = %s' % token
+        pass
 
     def socket_server_client_received(self, token, data):
-        print 'socket server received, token = ', token, ', data = ' , data
+        #print 'socket server received, token = ', token, ', data = ' , data
         self.interpreter.parse(token, data)
 
     def socket_server_client_error(self, token, message):
         print 'socket_server_client_error, token = ', token, 'message = %s', message
-        for player in self.players:
-            del player
+        for client in self.clients:
+            del client
     
     def update(self, dt):
-        # actualizar las posiciones
-        #for player in self.players:
-        #    self.socket_server.send(player.token, self.interpreter.build_wait_for_opponent())
-
-        pyglet.clock.schedule_once(self.update, dt)
+        if not self.game:
+            return
+        # actualizar las posiciones e informar a los clientes
+        self.game.update(dt)
+        for client in self.clients:
+            message = self.interpreter.build_snapshot(self.game.ball.x, self.game.ball.y, self.game.paddles[0].x, self.game.paddles[0].y, self.game.paddles[1].x, self.game.paddles[1].y)
+            self.socket_server.send(client.token, message)
 
 if __name__ == '__main__':
     application = PongMpServer()

@@ -16,7 +16,7 @@ class TCPServerClientListener(threading.Thread):
         self.on_received = None
         self.on_error = None
 
-        self.queue = Queue.Queue(10)
+        self.queue = Queue.Queue(2)
 
         self.timer = threading.Timer(self.timeout, self.timer_timer)
         self.timer.start()
@@ -129,11 +129,11 @@ class TCPServer(threading.Thread):
     def close(self):
         while self.isAlive():
             self.terminated = True
-            self.join(1/20.)
+            self.join(self.timeout)
         if self.socket:
             self.socket.close()
-            for i in range(len(self.clients)):
-                self.kill_client(self.clients[i])
+            for client in self.clients:
+                self.kill_client(client)
         if self.on_closed:
             self.on_closed()
 
@@ -168,7 +168,7 @@ class TCPServer(threading.Thread):
         return self.clients[-1].token + 1
 
     def kill_client(self, client):
-        del self.clients[self.clients.index(client)]
+        self.clients.remove(client)
         while client.isAlive():
             client.terminated = True
             client.join(1)
@@ -179,7 +179,7 @@ class TCPServer(threading.Thread):
         self.timer = None
 
         while not self.queue.empty():
-            task = self.queue.get(True, 1/20.)
+            task = self.queue.get(True, self.timeout)
             if not task:
                 if self.on_error:
                     self.on_error(self)
