@@ -12,7 +12,7 @@ class Client():
         self.paddle_index = None
 
 class PongMpServer():
-    GLOBAL_WAITING_TIME = (1/30.)
+    GLOBAL_WAITING_TIME = (1/60.)
 
     def __init__(self):
         self.game = None
@@ -36,7 +36,7 @@ class PongMpServer():
         
         self.socket_server.open()
         
-        pyglet.clock.schedule_interval(self.update, 1/60.)
+        pyglet.clock.schedule_interval(self.update, self.GLOBAL_WAITING_TIME)
 
     def interpreter_client_register(self, token, name):
         client = None
