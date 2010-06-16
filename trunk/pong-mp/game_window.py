@@ -46,7 +46,7 @@ class GameWindow(BaseWindow):
         BaseWindow.__init__(self, width=800, height=600, caption='pong-mp')
 
         # enviar ready al servidor
-        pyglet.clock.schedule_interval(self.update, 1 / 20.)
+        pyglet.clock.schedule_interval(self.update, 1/60.)
         self.fps_label = pyglet.text.Label(text='FPS: 0', x=0, y=0, anchor_x='left', anchor_y='bottom', batch=self.batch)
         self.key_label = pyglet.text.Label(text='KEY: Ninguna', x=0, y=20, anchor_x='left', anchor_y='bottom', batch=self.batch)
         self.dt_label = pyglet.text.Label(text='DT: 0', x=0, y=40, anchor_x='left', anchor_y='bottom', batch=self.batch)
@@ -77,9 +77,9 @@ class GameWindow(BaseWindow):
                 self.on_updated('NONE')
         
     def draw_snapshot(self, b_x, b_y, p1_x, p1_y, p2_x, p2_y):
-        self.ball.x = b_x
-        self.ball.y = b_y
-        self.paddle1.x = p1_x
-        self.paddle1.y = p1_y
-        self.paddle2.x = p2_x
-        self.paddle2.y = p2_y
+        self.ball.x = int(b_x)
+        self.ball.y = int(b_y)
+        self.paddle1.x = int(p1_x)
+        self.paddle1.y = int(p1_y)
+        self.paddle2.x = int(p2_x)
+        self.paddle2.y = int(p2_y)

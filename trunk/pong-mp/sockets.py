@@ -4,7 +4,7 @@ import threading
 import Queue
 import pyglet
 
-GLOBAL_WAITING_INTERVAL = (1/20.)
+GLOBAL_WAITING_INTERVAL = (1/60.)
 
 class TCPSocketListener(threading.Thread):
     def __init__(self, socket, queue):
@@ -57,7 +57,7 @@ class TCPClientSocket:
                     self.on_error('No se puede conectar al servidor')
                 return
         
-            self.queue = Queue.Queue(10)
+            self.queue = Queue.Queue(1)
             
             pyglet.clock.schedule_once(self.on_timer, GLOBAL_WAITING_INTERVAL)
 
@@ -91,7 +91,7 @@ class TCPClientSocket:
                 self.on_sent()
         else:
             if self.on_error:
-                self.on_error()
+                self.on_error('socket closed')
 
     def on_timer(self, dt):
         pyglet.clock.unschedule(self.on_timer)

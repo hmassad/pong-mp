@@ -1,130 +1,116 @@
 ''' Main Application '''
 
 import pyglet
-from config_window import ConfigWindow
-import server_client_interpreter
 from sockets import TCPClientSocket
+import server_client_interpreter
+from config_window import ConfigWindow
 from game_window import GameWindow
-from awaiting_window import AwaitingWindow
 
 class Application(object):
     def __init__(self):
         self.config_window = None
         self.game_window = None
-        self.awaiting_window = None
 
         self.player_name = None
 
         self.client_socket = None
 
+        self.interpreter = server_client_interpreter.ServerClientInterpreter()
+        self.interpreter.on_wait_for_opponent = self.interpreter_wait_for_opponent
+        self.interpreter.on_game_starting = self.interpreter_game_starting
+        self.interpreter.on_snapshot = self.interpreter_snapshot
+        
+        self.__open_config_window()
+
+    def __open_config_window(self):
+        if self.config_window:
+            self.__close_config_window()
         self.config_window = ConfigWindow()
         self.config_window.on_configured = self.config_window_configured
-        self.config_window.on_disconnected = self.application_closed
+        self.config_window.on_closed = self.config_window_closed
+        if self.player_name:
+            self.config_window.player_name_textbox.text = self.player_name
+        
+    def __close_config_window(self):
+        if self.config_window:
+            self.config_window.close()
+            self.config_window = None
+
+    def __open_game_window(self):
+        if self.game_window:
+            self.__close_game_window()
+        self.game_window = GameWindow()
+        self.game_window.on_updated = self.game_window_updated
+        self.game_window.on_closed = self.game_window_closed
+
+    def __close_game_window(self):
+        if self.game_window:
+            self.game_window.close()
+            self.game_window = None
 
     def config_window_configured(self, player_name, server_address):
         self.player_name = player_name
         
-        self.client_socket = TCPClientSocket(server_address, 8888)
-        self.client_socket.on_connected = self.client_socket_connected
-        self.client_socket.on_disconnected = self.client_socket_disconnected
-        self.client_socket.on_sent = self.client_socket_sent
-        self.client_socket.on_received = self.client_socket_received
-        self.client_socket.on_error = self.client_socket_error
-        self.client_socket.open()
+        if not self.client_socket:
+            self.client_socket = TCPClientSocket(server_address, 8888)
+            self.client_socket.on_connected = self.client_socket_connected
+            self.client_socket.on_disconnected = self.client_socket_disconnected
+            self.client_socket.on_sent = self.client_socket_sent
+            self.client_socket.on_received = self.client_socket_received
+            self.client_socket.on_error = self.client_socket_error
+            self.client_socket.open()
     
     def client_socket_connected(self):
         try:
             self.config_window.show_info('Servidor contactado, registrando jugador...')
-            # TODO: deshabilitar controles
+            # TODO: deshabilitar controles de config_window
 
-            self.interpreter = server_client_interpreter.ServerClientInterpreter()
-            self.interpreter.on_wait_for_opponent = self.interpreter_wait_for_opponent
-            self.interpreter.on_game_starting = self.interpreter_game_starting
-            self.interpreter.on_snapshot = self.interpreter_snapshot
-            
             self.client_socket.send(self.interpreter.build_registration(self.player_name))
-        except:
-            import sys
-            print "client_socket_connected error: ", sys.exc_info()[0]
+        except Exception as e:
+            print "client_socket_connected error, type: %s, message: %s" % (e.TypeName, e.args)
 
     def client_socket_disconnected(self):
         self.client_socket = None
         
         if not self.config_window:
-            self.config_window = ConfigWindow()
-            self.config_window.on_configured = self.config_window_configured
-            self.config_window.on_disconnected = self.application_closed
+            self.__open_config_window()
         self.config_window.show_warn('El servidor cerro la conexion')
-            
-        if self.awaiting_window:
-            self.awaiting_window.close()
-            self.awaiting_window = None
 
-        if self.game_window:
-            self.game_window.close()
-            self.game_window = None
+        self.__close_game_window()            
 
     def client_socket_error(self, message):
         self.client_socket = None
         
         if not self.config_window:
-            self.config_window = ConfigWindow()
-            self.config_window.on_configured = self.config_window_configured
-            self.config_window.on_disconnected = self.application_closed
+            self.__open_config_window()
         self.config_window.show_error(message)
-            
-        if self.awaiting_window:
-            self.awaiting_window.close()
-            self.awaiting_window = None
 
-        if self.game_window:
-            self.game_window.close()
-            self.game_window = None
+        self.__close_game_window()
 
     def client_socket_sent(self):
         pass
 
     def client_socket_received(self, msg):
-        print 'client_socket_received, message = ', msg
         try:
             self.interpreter.parse(msg)
         except Exception as e:
-            print 'client_socket_received, error = ', e.args
+            print "client_socket_received error, args: %s, message: %s" % (e.args, e.message)
 
     def interpreter_wait_for_opponent(self):
         '''
         se dispara cuando hay 1 jugador conectado y hay que esperar al segundo
         '''
-
-        '''
-        self.awaiting_window = AwaitingWindow()
-        self.awaiting_window.on_cancelled = self.awaiting_window_cancelled
-        
-        if self.config_window:
-            self.config_window.close()
-            self.config_window = None
-        '''
         if self.config_window:
             self.config_window.show_info('esperando oponente')
 
     def interpreter_game_starting(self, side, opponent):
-        print 'side: ', side
-        print 'opponent: ', opponent
         '''
         se dispara cuando hay 2 jugadores conectados
         @param side: lado de la cancha del jugador
         @param opponent: nombre del oponente
         '''
-        self.game_window = GameWindow()
-        self.game_window.on_updated = self.game_window_updated
-        
-        if self.awaiting_window:
-            self.awaiting_window.close()
-            self.awaiting_window = None
-
-        if self.config_window:
-            self.config_window.close()
-            self.config_window = None
+        self.__open_game_window()
+        self.__close_config_window()
 
     def interpreter_snapshot(self, b_x, b_y, p1_x, p1_y, p2_x, p2_y):
         '''
@@ -132,8 +118,7 @@ class Application(object):
         @param side: lado de la cancha del jugador
         @param opponent: nombre del oponente
         '''
-        if self.game_window:
-            self.game_window.draw_snapshot(b_x, b_y, p1_x, p1_y, p2_x, p2_y)
+        self.game_window.draw_snapshot(b_x, b_y, p1_x, p1_y, p2_x, p2_y)
 
     def game_window_updated(self, direction):
         '''
@@ -143,17 +128,14 @@ class Application(object):
         message = self.interpreter.build_direction_change(direction)
         self.client_socket.send(message)
 
-    def awaiting_window_cancelled(self):
-        self.config_window = ConfigWindow()
-        self.config_window.on_configured = self.config_window_configured
-        self.config_window.on_disconnected = self.application_closed
-        
-        if self.awaiting_window:
-            self.awaiting_window.close()
-            self.awaiting_window = None
+    def game_window_closed(self):
+        self.client_socket.close()
+        self.game_window = None
+        self.__open_config_window()
+        self.config_window.show_info('Se cerro la partida')
 
-    def application_closed(self):
-        if self.config_window and not self.game_window and not self.awaiting_window:
+    def config_window_closed(self):
+        if self.config_window and not self.game_window:
             if self.client_socket:
                 self.client_socket.close()
                 self.client_socket = None
