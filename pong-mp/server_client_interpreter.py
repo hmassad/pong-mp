@@ -15,11 +15,11 @@ class ServerClientInterpreter():
     def parse(self, payload):
         self.buffer += payload
         while True:
-            pos = self.buffer.find('\r\n\r\n')
+            pos = self.buffer.find(self.FIELD_SEPARATOR + self.FIELD_SEPARATOR)
             if pos == -1:
                 return
             message = self.buffer[0:pos]
-            self.buffer = self.buffer[pos + 4: len(self.buffer)]
+            self.buffer = self.buffer[pos + len(self.FIELD_SEPARATOR) * 2: len(self.buffer)]
             fields = string.split(message, self.FIELD_SEPARATOR)
             dict = {}
             for i in range(len(fields)):
@@ -27,7 +27,7 @@ class ServerClientInterpreter():
                 if len(field) == 0:
                     continue # separador
                 if len(field) < 2:
-                    raise Exception('Mensaje mal formado')
+                    raise Exception('Mensaje mal formado', message)
                 dict[field[0]] = field[1]
             if dict['command'] == 'wait for opponent':
                 if self.on_wait_for_opponent:
@@ -42,18 +42,18 @@ class ServerClientInterpreter():
                 self.on_game_finished(dict['player1 score'], dict['player2 score'])
 
     def build_registration(self, name):
-        message = 'command=register\r\n'
-        message += 'name=%s\r\n' % name
-        message += '\r\n'
+        message = 'command%sregister%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
+        message += 'name%s%s%s' % (self.KEY_SEPARATOR, name, self.FIELD_SEPARATOR)
+        message += self.FIELD_SEPARATOR
         return message
 
     def build_direction_change(self, direction):
-        message = 'command=update\r\n'
+        message = 'command%supdate%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
         if direction == 'UP':
-            message += 'direction=up\r\n'
+            message += 'direction%s%s%s' % (self.KEY_SEPARATOR, 'up', self.FIELD_SEPARATOR)
         elif direction == 'DOWN':
-            message += 'direction=down\r\n'
+            message += 'direction%s%s%s' % (self.KEY_SEPARATOR, 'down', self.FIELD_SEPARATOR)
         elif direction == 'NONE':
-            message += 'direction=none\r\n'
-        message += '\r\n'
+            message += 'direction%s%s%s' % (self.KEY_SEPARATOR, 'none', self.FIELD_SEPARATOR)
+        message += self.FIELD_SEPARATOR
         return message
