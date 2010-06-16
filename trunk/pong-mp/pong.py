@@ -67,7 +67,7 @@ class Application(object):
 
             self.client_socket.send(self.interpreter.build_registration(self.player_name))
         except Exception as e:
-            print "client_socket_connected error, type: %s, message: %s" % (e.TypeName, e.args)
+            print "client_socket_connected error, type: %s, message: %s" % (e, e.args)
 
     def client_socket_disconnected(self):
         self.client_socket = None
