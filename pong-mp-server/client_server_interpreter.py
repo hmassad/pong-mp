@@ -14,13 +14,14 @@ class ClientServerInterpreter():
         self.on_client_update = None
 
     def parse(self, client_token, payload):
-        self.buffer += payload
+        self.buffer = payload
         while True:
-            pos = self.buffer.find('\r\n\r\n')
+            terminator = self.FIELD_SEPARATOR + self.FIELD_SEPARATOR
+            pos = self.buffer.find(terminator)
             if pos == -1:
                 return
             message = self.buffer[0:pos]
-            self.buffer = self.buffer[pos + 4: len(self.buffer)]
+            self.buffer = self.buffer[pos + (len(terminator)): len(self.buffer)]
             fields = string.split(message, self.FIELD_SEPARATOR)
             dict = {}
             for i in range(len(fields)):
@@ -28,42 +29,46 @@ class ClientServerInterpreter():
                 if len(field) == 0:
                     continue # separador
                 if len(field) < 2:
-                    raise Exception('Mensaje mal formado')
+                    raise Exception('Mensaje mal formado', message)
                 dict[field[0]] = field[1]
-            if dict['command'] == 'register':
-                if self.on_client_register:
-                    self.on_client_register(client_token, dict['name'])
-            
-            if dict['command'] == 'update':
-                if self.on_client_update:
-                    self.on_client_update(client_token, dict['direction'])
+            try:
+                if dict['command'] == 'register':
+                    if self.on_client_register:
+                        self.on_client_register(client_token, dict['name'])
+                
+                if dict['command'] == 'update':
+                    if self.on_client_update:
+                        self.on_client_update(client_token, dict['direction'])
+            except Exception as e:
+                print e.args
+                print dict
         
     def build_wait_for_opponent(self):
-        message = 'command=wait for opponent\r\n'
-        message += '\r\n'
+        message = 'command%swait for opponent%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
+        message += self.FIELD_SEPARATOR
         return message
 
     def build_game_starting(self, side, opponent):
-        message = 'command=game starting\r\n'
-        message += 'side=%s\r\n' % side
-        message += 'opponent=%s\r\n' % opponent 
-        message += '\r\n'
+        message = 'command%sgame starting%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
+        message += 'side%s%s%s' % (self.KEY_SEPARATOR, side, self.FIELD_SEPARATOR)
+        message += 'opponent%s%s%s' % (self.KEY_SEPARATOR, opponent, self.FIELD_SEPARATOR)
+        message += self.FIELD_SEPARATOR
         return message
 
     def build_snapshot(self, b_x, b_y, p1_x, p1_y, p2_x, p2_y):
-        message = 'command=snapshot'
-        message += 'ball x=%d\r\n' % b_x
-        message += 'ball y=%d\r\n' % b_y
-        message += 'player1 x=%d\r\n' % p1_x
-        message += 'player1 y=%d\r\n' % p1_y
-        message += 'player2 x=%d\r\n' % p2_x
-        message += 'player2 y=%d\r\n' % p2_y
-        message += '\r\n'
+        message = 'command%ssnapshot%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
+        message += 'ball x%s%d%s' % (self.KEY_SEPARATOR, b_x, self.FIELD_SEPARATOR)
+        message += 'ball y%s%d%s' % (self.KEY_SEPARATOR, b_y, self.FIELD_SEPARATOR)
+        message += 'player1 x%s%d%s' % (self.KEY_SEPARATOR, p1_x, self.FIELD_SEPARATOR)
+        message += 'player1 y%s%d%s' % (self.KEY_SEPARATOR, p1_y, self.FIELD_SEPARATOR)
+        message += 'player2 x%s%d%s' % (self.KEY_SEPARATOR, p2_x, self.FIELD_SEPARATOR)
+        message += 'player2 y%s%d%s' % (self.KEY_SEPARATOR, p2_y, self.FIELD_SEPARATOR)
+        message += self.FIELD_SEPARATOR
         return message
 
     def build_game_finished(self, p1_score, p2_score):
         message = 'command=game finished'
-        message += 'player1 score=%d\r\n' % p1_score
-        message += 'player2 score=%d\r\n' % p2_score
-        message += '\r\n'
+        message += 'player1 score%s%d%s' % (self.KEY_SEPARATOR, p1_score, self.FIELD_SEPARATOR)
+        message += 'player2 score%s%d%s' % (self.KEY_SEPARATOR, p2_score, self.FIELD_SEPARATOR)
+        message += self.FIELD_SEPARATOR
         return message
