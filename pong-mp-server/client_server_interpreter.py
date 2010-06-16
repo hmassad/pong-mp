@@ -62,21 +62,24 @@ class ClientServerInterpreter():
         message += self.FIELD_SEPARATOR
         return message
 
-    def build_game_starting(self, side, opponent):
+    def build_game_starting(self, interval, side, opponent):
         message = 'command%sgame starting%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
+        message += 'interval%s%d%s' % (self.KEY_SEPARATOR, interval, self.FIELD_SEPARATOR)
         message += 'side%s%s%s' % (self.KEY_SEPARATOR, side, self.FIELD_SEPARATOR)
         message += 'opponent%s%s%s' % (self.KEY_SEPARATOR, opponent, self.FIELD_SEPARATOR)
         message += self.FIELD_SEPARATOR
         return message
 
-    def build_snapshot(self, b_x, b_y, p1_x, p1_y, p2_x, p2_y):
+    def build_snapshot(self, b_x, b_y, p1_x, p1_y, p1_s, p2_x, p2_y, p2_s):
         message = 'command%ssnapshot%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
         message += 'ball x%s%d%s' % (self.KEY_SEPARATOR, b_x, self.FIELD_SEPARATOR)
         message += 'ball y%s%d%s' % (self.KEY_SEPARATOR, b_y, self.FIELD_SEPARATOR)
         message += 'player1 x%s%d%s' % (self.KEY_SEPARATOR, p1_x, self.FIELD_SEPARATOR)
         message += 'player1 y%s%d%s' % (self.KEY_SEPARATOR, p1_y, self.FIELD_SEPARATOR)
+        message += 'player1 score%s%d%s' % (self.KEY_SEPARATOR, p1_s, self.FIELD_SEPARATOR)
         message += 'player2 x%s%d%s' % (self.KEY_SEPARATOR, p2_x, self.FIELD_SEPARATOR)
         message += 'player2 y%s%d%s' % (self.KEY_SEPARATOR, p2_y, self.FIELD_SEPARATOR)
+        message += 'player2 score%s%d%s' % (self.KEY_SEPARATOR, p2_s, self.FIELD_SEPARATOR)
         message += self.FIELD_SEPARATOR
         return message
 
