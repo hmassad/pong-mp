@@ -16,7 +16,7 @@ class TCPServerClientListener(threading.Thread):
         self.on_received = None
         self.on_error = None
 
-        self.queue = Queue.Queue(2)
+        self.queue = Queue.Queue(20)
 
         self.timer = threading.Timer(self.timeout, self.timer_timer)
         self.timer.start()

@@ -2,7 +2,7 @@
 import math, random
 
 class Ball():
-    SPEED = 100
+    SPEED = 200
     RADIUS = 8
     DIAMETER = RADIUS * 2
 
@@ -13,7 +13,7 @@ class Ball():
         self.vy = 0
 
 class Paddle():
-    SPEED = 100
+    SPEED = 200
     WIDTH = 8
     HEIGHT = 64
 
@@ -70,7 +70,7 @@ class Game():
             # la velocidad de la pelota depende de la distancia entre centros cuando chocan la pelota y la paleta
             #self.ball.vy += (self.ball.y - self.paddle2.y) * Ball.RADIUS
         # hacer rebotar la pelota contra jugador 1
-        elif self.ball.x < Paddle.WIDTH and self.ball.y <= self.paddle1.y + Paddle.HEIGHT / 2 and self.ball.y >= self.paddle2.y - Paddle.HEIGHT / 2:
+        elif self.ball.x < Paddle.WIDTH and self.ball.y <= self.paddle1.y + Paddle.HEIGHT / 2 and self.ball.y >= self.paddle1.y - Paddle.HEIGHT / 2:
             self.ball.x = Paddle.WIDTH
             self.ball.vx = -self.ball.vx
             #self.ball.vy += (self.ball.y - self.paddle1.y) * Ball.RADIUS

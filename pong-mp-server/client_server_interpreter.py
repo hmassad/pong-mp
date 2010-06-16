@@ -1,5 +1,6 @@
 '''  interpreter ''' 
 import string
+import threading
 
 class ClientServerInterpreter():
     '''Constants '''
@@ -8,28 +9,41 @@ class ClientServerInterpreter():
 
     def __init__(self):
         self.buffer = ''
+        self.lock = threading.Lock()
+
+        # variables auxiliares
+        self.pos = -1
+        self.message = None
 
         # eventos
         self.on_client_register = None
         self.on_client_update = None
 
     def parse(self, client_token, payload):
-        self.buffer = payload
+        # guardar el mensaje en el buffer protegido
+        with self.lock:
+            self.buffer += payload
+
         while True:
             terminator = self.FIELD_SEPARATOR + self.FIELD_SEPARATOR
-            pos = self.buffer.find(terminator)
-            if pos == -1:
-                return
-            message = self.buffer[0:pos]
-            self.buffer = self.buffer[pos + (len(terminator)): len(self.buffer)]
-            fields = string.split(message, self.FIELD_SEPARATOR)
+
+            # leer del buffer protegido
+            with self.lock:
+                self.pos = self.buffer.find(terminator)
+                if self.pos == -1:
+                    return
+                self.message = self.buffer[0:self.pos]
+                self.buffer = self.buffer[self.pos + (len(terminator)): len(self.buffer)]
+
+            # seguir procesando normalmente
+            fields = string.split(self.message, self.FIELD_SEPARATOR)
             dict = {}
             for i in range(len(fields)):
                 field = string.split(fields[i], self.KEY_SEPARATOR)
                 if len(field) == 0:
                     continue # separador
                 if len(field) < 2:
-                    raise Exception('Mensaje mal formado', message)
+                    raise Exception('Mensaje mal formado', self.message)
                 dict[field[0]] = field[1]
             try:
                 if dict['command'] == 'register':
