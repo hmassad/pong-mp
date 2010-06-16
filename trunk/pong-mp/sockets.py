@@ -67,7 +67,7 @@ class TCPClientSocket:
             if self.on_connected:
                 self.on_connected()
 
-    def __kill_listener_thread(self):
+    def kill_listener_thread(self):
         while self.socket_listener and self.socket_listener.isAlive():
             self.socket_listener.terminated = True
             self.socket_listener.join(GLOBAL_WAITING_INTERVAL)
@@ -93,7 +93,7 @@ class TCPClientSocket:
             if self.on_error:
                 self.on_error()
 
-    def __on_timer(self, dt):
+    def on_timer(self, dt):
         pyglet.clock.unschedule(self.on_timer)
         if not self.queue:
             return
