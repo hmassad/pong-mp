@@ -4,8 +4,6 @@ import threading
 import Queue
 import pyglet
 
-GLOBAL_WAITING_INTERVAL = (1/60.)
-
 class TCPSocketListener(threading.Thread):
     def __init__(self, socket, queue):
         threading.Thread.__init__(self)
@@ -29,9 +27,10 @@ class TCPSocketListener(threading.Thread):
 
 class TCPClientSocket:
 
-    def __init__(self, server_ip, server_port):
+    def __init__(self, server_ip, server_port, timeout):
         self.server_ip = server_ip;
         self.server_port = server_port;
+        self.timeout = timeout
 
         self.socket = None
         self.socket_listener = None
@@ -50,16 +49,16 @@ class TCPClientSocket:
         if not self.socket:
             try:
                 self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.socket.settimeout(GLOBAL_WAITING_INTERVAL)
+                self.socket.settimeout(self.timeout)
                 self.socket.connect((self.server_ip, self.server_port))
             except:
                 if self.on_error:
                     self.on_error('No se puede conectar al servidor')
                 return
         
-            self.queue = Queue.Queue(1)
+            self.queue = Queue.Queue(10)
             
-            pyglet.clock.schedule_once(self.on_timer, GLOBAL_WAITING_INTERVAL)
+            pyglet.clock.schedule_interval(self.on_timer, self.timeout)
 
             self.socket_listener = TCPSocketListener(self.socket, self.queue)
             self.socket_listener.start()
@@ -70,7 +69,7 @@ class TCPClientSocket:
     def kill_listener_thread(self):
         while self.socket_listener and self.socket_listener.isAlive():
             self.socket_listener.terminated = True
-            self.socket_listener.join(GLOBAL_WAITING_INTERVAL)
+            self.socket_listener.join(self.timeout)
         self.socket_listener = None
         
     def close(self):
@@ -94,7 +93,6 @@ class TCPClientSocket:
                 self.on_error('socket closed')
 
     def on_timer(self, dt):
-        pyglet.clock.unschedule(self.on_timer)
         if not self.queue:
             return
         while not self.queue.empty():
@@ -110,4 +108,3 @@ class TCPClientSocket:
                 break
             if self.on_received:
                 self.on_received(data) 
-        pyglet.clock.schedule_once(self.on_timer, dt)

@@ -42,11 +42,12 @@ class Paddle(pyglet.sprite.Sprite):
 
 class GameWindow(BaseWindow):
 
-    def __init__(self):
+    def __init__(self, timer_interval):
         BaseWindow.__init__(self, width=800, height=600, caption='pong-mp')
+        self.timer_interval = timer_interval
 
         # enviar ready al servidor
-        pyglet.clock.schedule_interval(self.update, 1/30.)
+        pyglet.clock.schedule_interval(self.update, self.timer_interval)
         self.fps_label = pyglet.text.Label(text='FPS: 0', x=0, y=0, anchor_x='left', anchor_y='bottom', batch=self.batch)
         self.key_label = pyglet.text.Label(text='KEY: Ninguna', x=0, y=20, anchor_x='left', anchor_y='bottom', batch=self.batch)
         self.dt_label = pyglet.text.Label(text='DT: 0', x=0, y=40, anchor_x='left', anchor_y='bottom', batch=self.batch)
