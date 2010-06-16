@@ -7,7 +7,7 @@ from config_window import ConfigWindow
 from game_window import GameWindow
 
 class Application(object):
-    GLOBAL_WAITING_TIME = (1/60.)
+    NETOWRK_TIMEOUT = (1 / 60.)
 
     def __init__(self):
         self.config_window = None
@@ -38,10 +38,10 @@ class Application(object):
             self.config_window.close()
             self.config_window = None
 
-    def __open_game_window(self):
+    def __open_game_window(self, timer_interval):
         if self.game_window:
             self.__close_game_window()
-        self.game_window = GameWindow(self.GLOBAL_WAITING_TIME)
+        self.game_window = GameWindow(self.NETOWRK_TIMEOUT)
         self.game_window.on_updated = self.game_window_updated
         self.game_window.on_closed = self.game_window_closed
 
@@ -54,7 +54,7 @@ class Application(object):
         self.player_name = player_name
         
         if not self.client_socket:
-            self.client_socket = TCPClientSocket(server_address, 8888, self.GLOBAL_WAITING_TIME)
+            self.client_socket = TCPClientSocket(server_address, 8888, self.NETOWRK_TIMEOUT)
             self.client_socket.on_connected = self.client_socket_connected
             self.client_socket.on_disconnected = self.client_socket_disconnected
             self.client_socket.on_sent = self.client_socket_sent
@@ -105,22 +105,29 @@ class Application(object):
         if self.config_window:
             self.config_window.show_info('esperando oponente')
 
-    def interpreter_game_starting(self, side, opponent):
+    def interpreter_game_starting(self, interval, side, opponent):
         '''
         se dispara cuando hay 2 jugadores conectados
+        @param interval: intervalo en que se deben enviar las actualizaciones al servidor
         @param side: lado de la cancha del jugador
         @param opponent: nombre del oponente
         '''
-        self.__open_game_window()
+        self.__open_game_window(interval)
         self.__close_config_window()
+        if side == 'left':
+            self.game_window.player1_name_label.text = self.player_name
+            self.game_window.player2_name_label.text = opponent
+        elif side == 'right':
+            self.game_window.player1_name_label.text = opponent
+            self.game_window.player2_name_label.text = self.player_name
 
-    def interpreter_snapshot(self, b_x, b_y, p1_x, p1_y, p2_x, p2_y):
+    def interpreter_snapshot(self, b_x, b_y, p1_x, p1_y, p1_s, p2_x, p2_y, p2_s):
         '''
         se dispara cuando se modificaron las posiciones de los elementos
         @param side: lado de la cancha del jugador
         @param opponent: nombre del oponente
         '''
-        self.game_window.draw_snapshot(b_x, b_y, p1_x, p1_y, p2_x, p2_y)
+        self.game_window.draw_snapshot(b_x, b_y, p1_x, p1_y, p1_s, p2_x, p2_y, p2_s)
 
     def game_window_updated(self, direction):
         '''

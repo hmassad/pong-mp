@@ -3,7 +3,6 @@
 import pyglet
 
 class BaseWindow(pyglet.window.Window):
-    #def __init__(self, application, width, height, caption):
     def __init__(self, width, height, caption):
         pyglet.gl.glShadeModel(pyglet.gl.GL_SMOOTH)
         #self.application = application
@@ -58,18 +57,18 @@ class BaseWindow(pyglet.window.Window):
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.TAB:
-            if modifiers & pyglet.window.key.MOD_SHIFT:
-                dir = -1
-            else:
-                dir = 1
-
-            if self.focused_control in self.controls:
-                i = self.controls.index(self.focused_control)
-            else:
-                i = 0
-                dir = 0
-
-            self.set_focus(self.controls[(i + dir) % len(self.controls)])
+            if len(self.controls) > 0:
+                if modifiers & pyglet.window.key.MOD_SHIFT:
+                    dir = -1
+                else:
+                    dir = 1
+    
+                if self.focused_control in self.controls:
+                    i = self.controls.index(self.focused_control)
+                else:
+                    i = 0
+                    dir = 0
+                self.set_focus(self.controls[(i + dir) % len(self.controls)])
 
         elif symbol == pyglet.window.key.ESCAPE:
             pyglet.app.exit()
