@@ -79,10 +79,10 @@ class Game():
         if self.ball.x < 0 or self.ball.x > Game.COURT_WIDTH:
             # si se va por la izquierda, punto para jugador 2
             if self.ball.x < 0:
-                self.paddle1.score += 1
+                self.paddle2.score += 1
             # si se va por la derecha, punto para jugador 1
             else:
-                self.paddle2.score += 1
+                self.paddle1.score += 1
 
             # resetaer todo
             self.__new_round()
