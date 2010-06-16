@@ -7,6 +7,8 @@ from config_window import ConfigWindow
 from game_window import GameWindow
 
 class Application(object):
+    GLOBAL_WAITING_TIME = (1/60.)
+
     def __init__(self):
         self.config_window = None
         self.game_window = None
@@ -39,7 +41,7 @@ class Application(object):
     def __open_game_window(self):
         if self.game_window:
             self.__close_game_window()
-        self.game_window = GameWindow()
+        self.game_window = GameWindow(self.GLOBAL_WAITING_TIME)
         self.game_window.on_updated = self.game_window_updated
         self.game_window.on_closed = self.game_window_closed
 
@@ -52,7 +54,7 @@ class Application(object):
         self.player_name = player_name
         
         if not self.client_socket:
-            self.client_socket = TCPClientSocket(server_address, 8888)
+            self.client_socket = TCPClientSocket(server_address, 8888, self.GLOBAL_WAITING_TIME)
             self.client_socket.on_connected = self.client_socket_connected
             self.client_socket.on_disconnected = self.client_socket_disconnected
             self.client_socket.on_sent = self.client_socket_sent
