@@ -2,9 +2,9 @@
 import math, random
 
 class Ball():
+    SPEED = 100
     RADIUS = 8
     DIAMETER = RADIUS * 2
-    SPEED = 10
 
     def __init__(self):
         self.x = 0
@@ -13,7 +13,7 @@ class Ball():
         self.vy = 0
 
 class Paddle():
-    SPEED = 10
+    SPEED = 100
     WIDTH = 8
     HEIGHT = 64
 
@@ -30,9 +30,8 @@ class Game():
 
     def __init__(self, player1_name, player2_name):
         self.ball = Ball()
-        self.paddles = []
-        self.paddles.append(Paddle(player1_name))
-        self.paddles.append(Paddle(player2_name))
+        self.paddle1 = Paddle(player1_name)
+        self.paddle2 = Paddle(player2_name)
         self.__new_round()
 
     def __new_round(self):
@@ -45,11 +44,11 @@ class Game():
         self.ball.vx = math.cos(angle) * Ball.SPEED
         self.ball.vy = math.sin(angle) * Ball.SPEED
 
-        self.paddles[0].x = Paddle.WIDTH / 2
-        self.paddles[0].y = Game.COURT_HEIGHT / 2
+        self.paddle1.x = Paddle.WIDTH / 2
+        self.paddle1.y = Game.COURT_HEIGHT / 2
 
-        self.paddles[1].x = Game.COURT_WIDTH - Paddle.WIDTH / 2
-        self.paddles[1].y = Game.COURT_HEIGHT / 2
+        self.paddle2.x = Game.COURT_WIDTH - Paddle.WIDTH / 2
+        self.paddle2.y = Game.COURT_HEIGHT / 2
 
     def __handle_ball(self, dt):
         self.ball.x += self.ball.vx * dt
@@ -65,39 +64,39 @@ class Game():
             self.ball.vy = -self.ball.vy
 
         # hacer rebotar la pelota contra jugador 2
-        if self.ball.x > Game.COURT_WIDTH - Paddle.WIDTH and self.ball.y <= self.paddles[1].y + Paddle.HEIGHT / 2 and self.ball.y >= self.paddles[1].y - Paddle.HEIGHT / 2:
+        if self.ball.x > Game.COURT_WIDTH - Paddle.WIDTH and self.ball.y <= self.paddle2.y + Paddle.HEIGHT / 2 and self.ball.y >= self.paddle2.y - Paddle.HEIGHT / 2:
             self.ball.x = Game.COURT_WIDTH - Paddle.WIDTH
             self.ball.vx = -self.ball.vx
             # la velocidad de la pelota depende de la distancia entre centros cuando chocan la pelota y la paleta
-            #self.ball.vy += (self.ball.y - self.paddles[1].y) * Ball.RADIUS
+            #self.ball.vy += (self.ball.y - self.paddle2.y) * Ball.RADIUS
         # hacer rebotar la pelota contra jugador 1
-        elif self.ball.x < Paddle.WIDTH and self.ball.y <= self.paddles[0].y + Paddle.HEIGHT / 2 and self.ball.y >= self.paddles[0].y - Paddle.HEIGHT / 2:
+        elif self.ball.x < Paddle.WIDTH and self.ball.y <= self.paddle1.y + Paddle.HEIGHT / 2 and self.ball.y >= self.paddle2.y - Paddle.HEIGHT / 2:
             self.ball.x = Paddle.WIDTH
             self.ball.vx = -self.ball.vx
-            #self.ball.vy += (self.ball.y - self.paddles[0].y) * Ball.RADIUS
+            #self.ball.vy += (self.ball.y - self.paddle1.y) * Ball.RADIUS
 
         # verificar que la pelota no se haya ido por los costados. Si fue punto, resetear
         if self.ball.x < 0 or self.ball.x > Game.COURT_WIDTH:
             # si se va por la izquierda, punto para jugador 2
             if self.ball.x < 0:
-                self.paddles[0].score += 1
+                self.paddle1.score += 1
             # si se va por la derecha, punto para jugador 1
             else:
-                self.paddles[1].score += 1
+                self.paddle2.score += 1
 
             # resetaer todo
             self.__new_round()
 
     def __handle_paddle(self, paddle, dt):
-        paddle.y += paddle.direction * Paddle.SPEED
+        paddle.y += paddle.direction * Paddle.SPEED * dt
         if paddle.y > Game.COURT_HEIGHT - Paddle.HEIGHT / 2:
             paddle.y = Game.COURT_HEIGHT - Paddle.HEIGHT / 2
         elif paddle.y < Paddle.HEIGHT / 2:
             paddle.y = Paddle.HEIGHT / 2
 
     def update(self, dt):
-        self.__handle_paddle(self.paddles[0], dt)
-        self.__handle_paddle(self.paddles[1], dt)
+        self.__handle_paddle(self.paddle1, dt)
+        self.__handle_paddle(self.paddle2, dt)
         self.__handle_ball(dt)
 
     def update_paddle_direction(self, paddle_index, direction):
@@ -107,8 +106,17 @@ class Game():
         @param direction: up, down, none
         '''
         if direction == 'up':
-            self.paddles[paddle_index].direction = 1
+            if paddle_index == 0:
+                self.paddle1.direction = 1
+            elif paddle_index == 1:
+                self.paddle2.direction = 1
         elif direction == 'down':
-            self.paddles[paddle_index].direction = -1
+            if paddle_index == 0:
+                self.paddle1.direction = -1
+            elif paddle_index == 1:
+                self.paddle2.direction = -1
         else:
-            self.paddles[paddle_index].direction = 0
+            if paddle_index == 0:
+                self.paddle1.direction = 0
+            elif paddle_index == 1:
+                self.paddle2.direction = 0

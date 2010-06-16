@@ -12,7 +12,7 @@ class Client():
         self.paddle_index = None
 
 class PongMpServer():
-    GLOBAL_WAITING_TIME = (1/60.)
+    GLOBAL_WAITING_TIME = (1/30.)
 
     def __init__(self):
         self.game = None
@@ -106,7 +106,7 @@ class PongMpServer():
         # actualizar las posiciones e informar a los clientes
         self.game.update(dt)
         for client in self.clients:
-            message = self.interpreter.build_snapshot(self.game.ball.x, self.game.ball.y, self.game.paddles[0].x, self.game.paddles[0].y, self.game.paddles[1].x, self.game.paddles[1].y)
+            message = self.interpreter.build_snapshot(self.game.ball.x, self.game.ball.y, self.game.paddle1.x, self.game.paddle1.y, self.game.paddle2.x, self.game.paddle2.y)
             self.socket_server.send(client.token, message)
 
 if __name__ == '__main__':
