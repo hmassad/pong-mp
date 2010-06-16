@@ -65,15 +65,15 @@ class GameWindow(BaseWindow):
         self.dt_label.text = 'DT: %f' % dt
         if self.keymap[pyglet.window.key.UP]:
             self.key_label.text = 'KEY: UP'
-            if self.on_update:
+            if self.on_updated:
                 self.on_updated('UP')
         elif self.keymap[pyglet.window.key.DOWN]:
             self.key_label.text = 'KEY: DOWN'
-            if self.on_update:
+            if self.on_updated:
                 self.on_updated('DOWN')
         else:
             self.key_label.text = 'KEY: Ninguna'
-            if self.on_update:
+            if self.on_updated:
                 self.on_updated('NONE')
         
     def draw_snapshot(self, b_x, b_y, p1_x, p1_y, p2_x, p2_y):

@@ -85,10 +85,11 @@ class Application(object):
         pass
 
     def client_socket_received(self, msg):
+        print 'client_socket_received, message = ', msg
         try:
             self.interpreter.parse(msg)
-        except Exception:
-            print 'client_socket_received error'
+        except Exception as e:
+            print 'client_socket_received, error = ', e.args
 
     def interpreter_wait_for_opponent(self):
         '''

@@ -10,16 +10,16 @@ class ServerClientInterpreter():
         self.on_wait_for_opponent = None
         self.on_game_starting = None
         self.on_snapshot = None
-        self.__buffer = ''
+        self.buffer = ''
 
     def parse(self, payload):
         self.buffer += payload
         while True:
-            pos = self.__buffer.find('\r\n\r\n')
+            pos = self.buffer.find('\r\n\r\n')
             if pos == -1:
                 return
-            message = self.__buffer[0:pos]
-            self.__buffer = self.__buffer[pos + 4: len(self.__buffer)]
+            message = self.buffer[0:pos]
+            self.buffer = self.buffer[pos + 4: len(self.buffer)]
             fields = string.split(message, self.FIELD_SEPARATOR)
             dict = {}
             for i in range(len(fields)):
