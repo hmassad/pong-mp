@@ -51,6 +51,10 @@ class GameWindow(BaseWindow):
         self.fps_label = pyglet.text.Label(text='FPS: 0', x=0, y=0, anchor_x='left', anchor_y='bottom', batch=self.batch)
         self.key_label = pyglet.text.Label(text='KEY: Ninguna', x=0, y=20, anchor_x='left', anchor_y='bottom', batch=self.batch)
         self.dt_label = pyglet.text.Label(text='DT: 0', x=0, y=40, anchor_x='left', anchor_y='bottom', batch=self.batch)
+        self.player1_name_label = pyglet.text.Label(text='player1', x=800 / 4, y=600 / 2 + 20, anchor_x='center', anchor_y='center', batch=self.batch)
+        self.player1_score_label = pyglet.text.Label(text='0', x=800 / 4, y=600 / 2 - 20, anchor_x='center', anchor_y='center', batch=self.batch)
+        self.player2_name_label = pyglet.text.Label(text='player2', x=3 * 800 / 4, y=600 / 2 + 20, anchor_x='center', anchor_y='center', batch=self.batch)
+        self.player2_score_label = pyglet.text.Label(text='0', x=3 * 800 / 4, y=600 / 2 - 20, anchor_x='center', anchor_y='center', batch=self.batch)
         
         self.ball = Ball(self.width / 2, self.height / 2, 8, self.batch)
         self.paddle1 = Paddle(4, self.height / 2, 8, 64, self.batch)
@@ -77,10 +81,12 @@ class GameWindow(BaseWindow):
             if self.on_updated:
                 self.on_updated('NONE')
         
-    def draw_snapshot(self, b_x, b_y, p1_x, p1_y, p2_x, p2_y):
+    def draw_snapshot(self, b_x, b_y, p1_x, p1_y, p1_s, p2_x, p2_y, p2_s):
         self.ball.x = int(b_x)
         self.ball.y = int(b_y)
         self.paddle1.x = int(p1_x)
         self.paddle1.y = int(p1_y)
+        self.player1_score_label.text = str(p1_s)
         self.paddle2.x = int(p2_x)
         self.paddle2.y = int(p2_y)
+        self.player2_score_label.text = str(p2_s)
