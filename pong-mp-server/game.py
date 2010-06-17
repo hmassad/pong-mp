@@ -25,6 +25,7 @@ class Paddle():
         self.score = 0
 
 class Game():
+    UPDATE_INTERVAL = 1/50.
     COURT_WIDTH = 800
     COURT_HEIGHT = 600
 

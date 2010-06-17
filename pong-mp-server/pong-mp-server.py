@@ -51,8 +51,8 @@ class PongMpServer():
             self.clients[0].paddle_index = 0
             self.clients[1].paddle_index = 1
             self.game = game.Game(self.clients[0].name, self.clients[1].name)
-            self.socket_server.send(self.clients[0].token, self.interpreter.build_game_starting(self.NETWORK_TIMEOUT, side='left', opponent=self.clients[1].name))
-            self.socket_server.send(self.clients[1].token, self.interpreter.build_game_starting(self.NETWORK_TIMEOUT, side='right', opponent=self.clients[0].name))
+            self.socket_server.send(self.clients[0].token, self.interpreter.build_game_starting(game.Game.UPDATE_INTERVAL * 1000, side='left', opponent=self.clients[1].name))
+            self.socket_server.send(self.clients[1].token, self.interpreter.build_game_starting(game.Game.UPDATE_INTERVAL * 1000, side='right', opponent=self.clients[0].name))
 
     def interpreter_client_update(self, token, direction):
         client = None
@@ -86,9 +86,7 @@ class PongMpServer():
                 self.clients.remove(client)
                 break
         print 'socket_server_client_disconnected, token = ', token
-        '''
-        @todo: si el juego esta en curso, terminarlo y desconectar al otro jugador
-        '''
+        # @todo: si el juego esta en curso, terminarlo y desconectar al otro jugador
     
     def socket_server_client_sent(self, token):
         #print 'socket server sent, token = %s' % token
@@ -107,6 +105,7 @@ class PongMpServer():
         if not self.game:
             return
         # actualizar las posiciones e informar a los clientes
+        # @todo: ver fin de juego
         self.game.update(dt)
         for client in self.clients:
             message = self.interpreter.build_snapshot(self.game.ball.x, self.game.ball.y, self.game.paddle1.x, self.game.paddle1.y, self.game.paddle1.score, self.game.paddle2.x, self.game.paddle2.y, self.game.paddle2.score)

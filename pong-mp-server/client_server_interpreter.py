@@ -83,9 +83,11 @@ class ClientServerInterpreter():
         message += self.FIELD_SEPARATOR
         return message
 
-    def build_game_finished(self, p1_score, p2_score):
+    def build_game_finished(self, p1_name, p1_score, p2_name, p2_score):
         message = 'command=game finished'
+        message += 'player1 name%s%d%s' % (self.KEY_SEPARATOR, p1_score, self.FIELD_SEPARATOR)
         message += 'player1 score%s%d%s' % (self.KEY_SEPARATOR, p1_score, self.FIELD_SEPARATOR)
-        message += 'player2 score%s%d%s' % (self.KEY_SEPARATOR, p2_score, self.FIELD_SEPARATOR)
+        message += 'player2 name%s%d%s' % (self.KEY_SEPARATOR, p2_score, self.FIELD_SEPARATOR)
+        message += 'player2 score%s%d%s' % (self.KEY_SEPARATOR, p1_score, self.FIELD_SEPARATOR)
         message += self.FIELD_SEPARATOR
         return message
