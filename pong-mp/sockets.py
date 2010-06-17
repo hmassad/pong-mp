@@ -1,11 +1,21 @@
-''' sockets '''
+''' socket del cliente '''
 import socket
 import threading
 import Queue
 import pyglet
+import utils
 
 class TCPSocketListener(threading.Thread):
+    '''
+    Thread que escucha al socket.
+    '''
+
     def __init__(self, socket, queue):
+        '''
+        Inicializacion
+        @param socket: socket a escuchar
+        @param queue: cola en la que se encolara lo recibido por el socket
+        '''
         threading.Thread.__init__(self)
         self.socket = socket
         self.queue = queue
@@ -16,37 +26,46 @@ class TCPSocketListener(threading.Thread):
             try:
                 data = self.socket.recv(65535)
                 if not data:
-                    self.queue.put(None)
-                self.queue.put(data)
+                    self.queue.put(('disconnected', None))
+                self.queue.put(('received', data))
             except socket.timeout:
                 pass
-            except socket.error:
+            except Exception as e:
                 if not self.terminated:
-                    self.queue.put(None)
+                    self.queue.put(('error', e.args))
                 break
 
 class TCPClientSocket:
+    '''
+    Socket TCP cliente.
+    Se utiliza pyglet.clock para el timer, porque se dibujara a partir de lo recibido por el socket.
+    '''
 
     def __init__(self, server_ip, server_port, timeout):
+        '''
+        Inicializacion
+        @param server_ip: direccion ip de pong-mp-server
+        @param server_port: puerto de pong-mp-server
+        @param timeout: timeout para las operaciones sobre sockets
+        '''
         self.server_ip = server_ip;
         self.server_port = server_port;
         self.timeout = timeout
 
+        self.__opened = False
         self.socket = None
-        self.socket_listener = None
+        self.queue = None
+        self.listener = None
         
-        # events
+        # eventos
         self.on_connected = None
         self.on_disconnected = None
         self.on_error = None
         self.on_sent = None
         self.on_received = None
         
-        self.queue = None
-        self.timer = None
-        
     def open(self):
-        if not self.socket:
+        if not self.__opened:
             try:
                 self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.socket.settimeout(self.timeout)
@@ -57,54 +76,85 @@ class TCPClientSocket:
                 return
         
             self.queue = Queue.Queue(10)
-            
-            pyglet.clock.schedule_interval(self.on_timer, self.timeout)
+            pyglet.clock.schedule_interval(self.__timer_expired, self.timeout)
 
-            self.socket_listener = TCPSocketListener(self.socket, self.queue)
-            self.socket_listener.start()
-            
+            self.listener = TCPSocketListener(self.socket, self.queue)
+            self.listener.start()
+
+            self.__opened = True
             if self.on_connected:
                 self.on_connected()
 
-    def kill_listener_thread(self):
-        while self.socket_listener and self.socket_listener.isAlive():
-            self.socket_listener.terminated = True
-            self.socket_listener.join(self.timeout)
-        self.socket_listener = None
-        
     def close(self):
-        pyglet.clock.unschedule(self.on_timer)
-
-        if self.socket:
-            self.kill_listener_thread()
-            self.socket.close()
-            self.socket = None
-                
+        if self.__opened:
+            try:
+                pyglet.clock.unschedule(self.__timer_expired)
+            except:
+                pass
+    
+            if self.listener:
+                try:
+                    while self.listener and self.listener.isAlive():
+                        self.listener.terminated = True
+                        self.listener.join(self.timeout)
+                except:
+                    pass
+                finally:
+                    self.listener = None
+            
+            if self.socket:
+                try:
+                    self.socket.close()
+                except Exception as e:
+                    utils.print_exception(e)
+                finally:
+                    self.socket = None
+                    
             if self.queue:
                 self.queue = None
+    
+            self.__opened = False
 
-    def send(self, mensaje):
-        if self.socket:
-            self.socket.send(mensaje)
-            if self.on_sent:
-                self.on_sent()
+    def send(self, message):
+        if self.__opened:
+            try:
+                self.socket.send(message)
+                if self.on_sent:
+                    self.on_sent()
+            except Exception as e:
+                self.close()
+                if self.on_error:
+                    self.on_error(e.args)
+                return
         else:
             if self.on_error:
-                self.on_error('socket closed')
+                self.on_error(('socket closed',))
 
-    def on_timer(self, dt):
-        if not self.queue:
+    def __timer_expired(self, dt):
+        '''
+        Funcion que se ejecuta periodicamente para levantar los mensajes del socket
+        @param dt: tiempo transcurrido desde la ultima revision
+        '''
+        if not self.__opened:
+            pyglet.clock.unschedule(self.__timer_expired)
             return
-        while not self.queue.empty():
-            data = self.queue.get(False)
-            if not data:
-                self.kill_listener_thread()
-                
-                self.socket.close()
-                self.socket = None
-                
-                if self.on_disconnected:
-                    self.on_disconnected()
-                break
-            if self.on_received:
-                self.on_received(data) 
+
+        while self.queue and not self.queue.empty():
+            try:
+                task = self.queue.get(True, self.timeout)
+                if task[0] == 'received':
+                    if self.on_received:
+                        self.on_received(task[1])
+                elif task[0] == 'disconnected':
+                    self.close()
+                    if self.on_disconnected:
+                        self.on_disconnected()
+                    return
+                elif task[0] == 'error':
+                    self.close()
+                    if self.on_error:
+                        self.on_error(task[1])
+                    return
+                self.queue.task_done()
+            except:
+                pass

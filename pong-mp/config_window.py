@@ -15,7 +15,7 @@ class ConfigWindow(BaseWindow):
 
         self.server_address_label = pyglet.text.Label('Servidor', x=10, y=60, anchor_y='bottom', color=(255, 255, 255, 255), batch=self.batch)
         
-        self.message_label = pyglet.text.Label('', x=10, y=140, anchor_y='bottom', color=(255, 255, 255, 255), batch=self.batch)
+        self.message_label = pyglet.text.Label('', x=self.width / 2, y=140, anchor_x='center', anchor_y='bottom', color=(255, 255, 255, 255), batch=self.batch)
         
         self.player_name_textbox = TextBox(self, 200, 100, self.width - 210, 20, 'Jugador1', (255, 255, 255, 255), (0, 0, 0, 255))
         self.controls.append(self.player_name_textbox)
@@ -31,16 +31,19 @@ class ConfigWindow(BaseWindow):
         self.height = 180
         self.message_label.color = (0, 0, 255, 255) # azul
         self.message_label.text = message
+        self.flip()
 
     def show_warn(self, message):
         self.height = 180
         self.message_label.color = (255, 242, 0, 255) # amarillo
         self.message_label.text = message
+        self.flip()
 
     def show_error(self, message):
         self.height = 180
         self.message_label.color = (255, 0, 0, 255) # rojo
         self.message_label.text = message
+        self.flip()
 
     def join_button_click(self):
         if self.on_configured:
