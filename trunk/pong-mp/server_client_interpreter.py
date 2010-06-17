@@ -34,10 +34,13 @@ class ServerClientInterpreter():
                     self.on_wait_for_opponent()
             elif dict['command'] == 'game starting':
                 if self.on_game_starting:
-                    self.on_game_starting(dict['interval'], dict['side'], dict['opponent'])
+                    self.on_game_starting(float(dict['interval']) / 1000, dict['side'], dict['opponent'])
             elif dict['command'] == 'snapshot':
                 if self.on_snapshot:
                     self.on_snapshot(dict['ball x'], dict['ball y'], dict['player1 x'], dict['player1 y'], dict['player1 score'], dict['player2 x'], dict['player2 y'], dict['player2 score'])
+            elif dict['command'] == 'game finished':
+                if self.on_game_finished:
+                    self.on_game_starting(dict['player1 name'], dict['player1 score'], dict['player2 name'], dict['player2 score'])
 
     def build_registration(self, name):
         message = 'command%sregister%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)

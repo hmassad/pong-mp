@@ -3,7 +3,7 @@
 from controls import BaseWindow
 import pyglet
 
-'''  clase que modela la pelota ''' 
+'''  imagen de pelota ''' 
 class Ball(pyglet.sprite.Sprite):
 
     def __init__(self, x, y, diameter, batch):
@@ -24,7 +24,7 @@ class Ball(pyglet.sprite.Sprite):
         self.x = x
         self.y = y
 
-''' clase que modela la paleta ''' 
+''' imagen de paleta ''' 
 class Paddle(pyglet.sprite.Sprite):
 
     def __init__(self, x, y, width, height, batch):
@@ -63,11 +63,15 @@ class GameWindow(BaseWindow):
         # eventos
         self.on_updated = None
 
+    def on_close(self):
+        pyglet.clock.unschedule(self.update)
+        BaseWindow.on_close(self)
+
     def update(self, dt):
         # aplicar cambios de posicion de paletas y pelota
         # enviar cambio de posicion de paleta
         self.fps_label.text = 'FPS: %d' % pyglet.clock.get_fps()
-        self.dt_label.text = 'DT: %f' % dt
+        self.dt_label.text = 'DT: %d' % (int(1 / dt))
         if self.keymap[pyglet.window.key.UP]:
             self.key_label.text = 'KEY: UP'
             if self.on_updated:

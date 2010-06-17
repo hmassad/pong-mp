@@ -5,6 +5,7 @@ from sockets import TCPClientSocket
 import server_client_interpreter
 from config_window import ConfigWindow
 from game_window import GameWindow
+import utils
 
 class Application(object):
     NETOWRK_TIMEOUT = (1 / 60.)
@@ -17,6 +18,7 @@ class Application(object):
 
         self.client_socket = None
 
+        self.interpreter = None
         self.interpreter = server_client_interpreter.ServerClientInterpreter()
         self.interpreter.on_wait_for_opponent = self.interpreter_wait_for_opponent
         self.interpreter.on_game_starting = self.interpreter_game_starting
@@ -41,7 +43,7 @@ class Application(object):
     def __open_game_window(self, timer_interval):
         if self.game_window:
             self.__close_game_window()
-        self.game_window = GameWindow(self.NETOWRK_TIMEOUT)
+        self.game_window = GameWindow(timer_interval)
         self.game_window.on_updated = self.game_window_updated
         self.game_window.on_closed = self.game_window_closed
 
@@ -69,9 +71,11 @@ class Application(object):
 
             self.client_socket.send(self.interpreter.build_registration(self.player_name))
         except Exception as e:
-            print "client_socket_connected error, type: %s, message: %s" % (e, e.args)
+            #print "client_socket_connected error, type: %s, message: %s" % (e, e.args)
+            utils.print_exception(e)
 
     def client_socket_disconnected(self):
+        self.client_socket.close()
         self.client_socket = None
         
         if not self.config_window:
@@ -81,11 +85,15 @@ class Application(object):
         self.__close_game_window()            
 
     def client_socket_error(self, message):
+        self.client_socket.close()
         self.client_socket = None
         
         if not self.config_window:
             self.__open_config_window()
-        self.config_window.show_error(message)
+        if type(message) is tuple:
+            self.config_window.show_error('El servidor cerro la conexion (%s)' % (message[0]))
+        else:
+            self.config_window.show_error(message)
 
         self.__close_game_window()
 
@@ -96,14 +104,15 @@ class Application(object):
         try:
             self.interpreter.parse(msg)
         except Exception as e:
-            print "client_socket_received error, args: %s, message: %s" % (e.args, e.message)
+            #print "client_socket_received error, args: %s, message: %s" % (e.args, e.message)
+            utils.print_exception(e)
 
     def interpreter_wait_for_opponent(self):
         '''
         se dispara cuando hay 1 jugador conectado y hay que esperar al segundo
         '''
         if self.config_window:
-            self.config_window.show_info('esperando oponente')
+            self.config_window.show_info('Esperando oponente...')
 
     def interpreter_game_starting(self, interval, side, opponent):
         '''
@@ -127,21 +136,39 @@ class Application(object):
         @param side: lado de la cancha del jugador
         @param opponent: nombre del oponente
         '''
-        self.game_window.draw_snapshot(b_x, b_y, p1_x, p1_y, p1_s, p2_x, p2_y, p2_s)
+        if self.game_window:
+            try:
+                self.game_window.draw_snapshot(b_x, b_y, p1_x, p1_y, p1_s, p2_x, p2_y, p2_s)
+            except Exception as e:
+                utils.print_exception(e)
+
+    def interpreter_game_finished(self, p1_name, p1_score, p2_name, p2_score):
+        if self.game_window:
+            self.game_window.close()
+            self.game_window = None
+        if self.config_window:
+            self.config_window.show_info('Finalizo la partida. %s: %d, %s: %d' % (p1_name, p1_score, p2_name, p2_score))
 
     def game_window_updated(self, direction):
         '''
         se dispara de a intervalos regulares, para enviar el cambio de posicion de la paleta del jugador local
         @param direction: direccion hacia donde se mueve la paleta
         '''
-        message = self.interpreter.build_direction_change(direction)
-        self.client_socket.send(message)
+        if self.game_window:
+            try:
+                message = self.interpreter.build_direction_change(direction)
+                self.client_socket.send(message)
+            except Exception as e:
+                utils.print_exception(e)
 
     def game_window_closed(self):
         self.client_socket.close()
-        self.game_window = None
+        self.client_socket = None
+        
         self.__open_config_window()
-        self.config_window.show_info('Se cerro la partida')
+        self.config_window.show_warn('El servidor cerro la conexion.')
+
+        self.game_window = None
 
     def config_window_closed(self):
         if self.config_window and not self.game_window:
