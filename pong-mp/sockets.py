@@ -5,7 +5,7 @@ import Queue
 import pyglet
 import utils
 
-class TCPSocketListener(threading.Thread):
+class TCPClientListener(threading.Thread):
     '''
     Thread que escucha al socket.
     '''
@@ -35,7 +35,7 @@ class TCPSocketListener(threading.Thread):
                     self.queue.put(('error', e.args))
                 break
 
-class TCPClientSocket:
+class TCPClient:
     '''
     Socket TCP cliente.
     Se utiliza pyglet.clock para el timer, porque se dibujara a partir de lo recibido por el socket.
@@ -48,8 +48,8 @@ class TCPClientSocket:
         @param server_port: puerto de pong-mp-server
         @param timeout: timeout para las operaciones sobre sockets
         '''
-        self.server_ip = server_ip;
-        self.server_port = server_port;
+        self.server_ip = server_ip
+        self.server_port = server_port
         self.timeout = timeout
 
         self.__opened = False
@@ -78,7 +78,7 @@ class TCPClientSocket:
             self.queue = Queue.Queue(10)
             pyglet.clock.schedule_interval(self.__timer_expired, self.timeout)
 
-            self.listener = TCPSocketListener(self.socket, self.queue)
+            self.listener = TCPClientListener(self.socket, self.queue)
             self.listener.start()
 
             self.__opened = True
@@ -86,6 +86,10 @@ class TCPClientSocket:
                 self.on_connected()
 
     def close(self):
+        '''
+        Cierra el cliente.
+        Cierra el thread que escucha al socket, el socket
+        '''
         if self.__opened:
             try:
                 pyglet.clock.unschedule(self.__timer_expired)
@@ -116,6 +120,10 @@ class TCPClientSocket:
             self.__opened = False
 
     def send(self, message):
+        '''
+        Envia un mensaje al servidor
+        @param message: mensaje a enviar por el socket
+        '''
         if self.__opened:
             try:
                 self.socket.send(message)
