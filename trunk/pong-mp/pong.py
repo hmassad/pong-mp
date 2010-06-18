@@ -1,7 +1,7 @@
 ''' Main Application '''
 
 import pyglet
-from sockets import TCPClientSocket
+from sockets import TCPClient
 import server_client_interpreter
 from config_window import ConfigWindow
 from game_window import GameWindow
@@ -56,7 +56,7 @@ class Application(object):
         self.player_name = player_name
         
         if not self.client_socket:
-            self.client_socket = TCPClientSocket(server_address, 8888, self.NETOWRK_TIMEOUT)
+            self.client_socket = TCPClient(server_address, 8888, self.NETOWRK_TIMEOUT)
             self.client_socket.on_connected = self.client_socket_connected
             self.client_socket.on_disconnected = self.client_socket_disconnected
             self.client_socket.on_sent = self.client_socket_sent

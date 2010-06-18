@@ -15,11 +15,12 @@ class ServerClientInterpreter():
     def parse(self, payload):
         self.buffer += payload
         while True:
-            pos = self.buffer.find(self.FIELD_SEPARATOR + self.FIELD_SEPARATOR)
+            terminator = self.FIELD_SEPARATOR + self.FIELD_SEPARATOR
+            pos = self.buffer.find(terminator)
             if pos == -1:
                 return
             message = self.buffer[0:pos]
-            self.buffer = self.buffer[pos + len(self.FIELD_SEPARATOR) * 2: len(self.buffer)]
+            self.buffer = self.buffer[pos + len(terminator): len(self.buffer)]
             fields = string.split(message, self.FIELD_SEPARATOR)
             dict = {}
             for i in range(len(fields)):
