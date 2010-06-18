@@ -3,7 +3,7 @@ import socket
 import threading
 import Queue
 
-class TCPServerClientListener(threading.Thread):
+class TCPServerClient(threading.Thread):
     def __init__ (self, token, socket, addr, timeout):
         threading.Thread.__init__(self)
         self.token = token
@@ -28,6 +28,9 @@ class TCPServerClientListener(threading.Thread):
         while not self.terminated:
             try:
                 data = self.socket.recv(4096)
+                if not data:
+                    self.queue.put(('disconnected', data))
+                    break
                 self.queue.put(('received', data))
             except socket.timeout as e:
                 pass
@@ -56,11 +59,11 @@ class TCPServerClientListener(threading.Thread):
                 if self.on_error:
                     self.on_error(self, task[1])
                 return
-            elif task[0] == 'received':
-                if not task[1]:
-                    if self.on_disconnected:
-                        self.on_disconnected(self)
+            elif task[0] == 'disconnected':
+                if self.on_disconnected:
+                    self.on_disconnected(self)
                     return
+            elif task[0] == 'received':
                 if self.on_received:
                     self.on_received(self, task[1])
                 self.queue.task_done()
@@ -171,7 +174,7 @@ class TCPServer(threading.Thread):
         self.clients.remove(client)
         while client.isAlive():
             client.terminated = True
-            client.join(1)
+            client.join(self.timeout)
 
     def timer_timer(self):
         self.timer.cancel()
@@ -186,7 +189,7 @@ class TCPServer(threading.Thread):
                 break
             else:
                 token = self.generate_token()
-                client = TCPServerClientListener(token, task[0], task[1], self.timeout)
+                client = TCPServerClient(token, task[0], task[1], self.timeout)
                 client.on_disconnected = self.client_disconnected
                 client.on_error = self.client_error
                 client.on_sent = self.client_sent

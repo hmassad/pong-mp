@@ -31,7 +31,7 @@ class ClientServerInterpreter():
             with self.lock:
                 self.pos = self.buffer.find(terminator)
                 if self.pos == -1:
-                    return
+                    break
                 self.message = self.buffer[0:self.pos]
                 self.buffer = self.buffer[self.pos + (len(terminator)): len(self.buffer)]
 

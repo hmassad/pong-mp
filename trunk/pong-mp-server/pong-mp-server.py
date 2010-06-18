@@ -93,7 +93,6 @@ class PongMpServer():
         pass
 
     def socket_server_client_received(self, token, data):
-        #print 'socket server received, token = ', token, ', data = ' , data
         self.interpreter.parse(token, data)
 
     def socket_server_client_error(self, token, message):
