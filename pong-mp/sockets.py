@@ -3,7 +3,6 @@ import socket
 import threading
 import Queue
 import pyglet
-import utils
 
 class TCPClientListener(threading.Thread):
     '''
@@ -88,13 +87,16 @@ class TCPClient:
     def close(self):
         '''
         Cierra el cliente.
-        Cierra el thread que escucha al socket, el socket
+        Cierra el thread que escucha al socket.
         '''
         if self.__opened:
             try:
                 pyglet.clock.unschedule(self.__timer_expired)
             except:
                 pass
+    
+            if self.queue:
+                self.queue = None
     
             if self.listener:
                 try:
@@ -108,15 +110,13 @@ class TCPClient:
             
             if self.socket:
                 try:
+                    self.socket.shutdown(socket.SHUT_RDWR)
                     self.socket.close()
                 except Exception as e:
-                    utils.print_exception(e)
+                    print 'Exception: type = %s, args = %s, message = %s' %(type(e), e.args, e.message)
                 finally:
                     self.socket = None
                     
-            if self.queue:
-                self.queue = None
-    
             self.__opened = False
 
     def send(self, message):
