@@ -10,6 +10,7 @@ class ServerClientInterpreter():
         self.on_wait_for_opponent = None
         self.on_game_starting = None
         self.on_snapshot = None
+        self.on_game_finished = None
         self.buffer = ''
 
     def parse(self, payload):
@@ -41,11 +42,16 @@ class ServerClientInterpreter():
                     self.on_snapshot(dict['ball x'], dict['ball y'], dict['player1 x'], dict['player1 y'], dict['player1 score'], dict['player2 x'], dict['player2 y'], dict['player2 score'])
             elif dict['command'] == 'game finished':
                 if self.on_game_finished:
-                    self.on_game_starting(dict['player1 name'], dict['player1 score'], dict['player2 name'], dict['player2 score'])
+                    self.on_game_finished(dict['player1 name'], dict['player1 score'], dict['player2 name'], dict['player2 score'])
 
     def build_registration(self, name):
         message = 'command%sregister%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
         message += 'name%s%s%s' % (self.KEY_SEPARATOR, name, self.FIELD_SEPARATOR)
+        message += self.FIELD_SEPARATOR
+        return message
+
+    def build_deregistration(self):
+        message = 'command%sunregister%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
         message += self.FIELD_SEPARATOR
         return message
 

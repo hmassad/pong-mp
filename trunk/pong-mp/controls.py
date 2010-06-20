@@ -5,7 +5,6 @@ import pyglet
 class BaseWindow(pyglet.window.Window):
     def __init__(self, width, height, caption):
         pyglet.gl.glShadeModel(pyglet.gl.GL_SMOOTH)
-        #self.application = application
         self.batch = pyglet.graphics.Batch()
         self.controls = []
         self.focused_control = None
@@ -17,6 +16,11 @@ class BaseWindow(pyglet.window.Window):
         
         self.on_closed = None
 
+    def on_close(self):
+        if self.on_closed:
+            self.on_closed()
+        pyglet.window.Window.on_close(self)
+            
     def on_draw(self):
         self.clear()
         self.batch.draw()
@@ -70,8 +74,6 @@ class BaseWindow(pyglet.window.Window):
                     dir = 0
                 self.set_focus(self.controls[(i + dir) % len(self.controls)])
 
-        #elif symbol == pyglet.window.key.ESCAPE:
-        #    pyglet.app.exit()
         else:
             if self.focused_control:
                 self.focused_control.on_key_press(symbol, modifiers)
@@ -86,11 +88,6 @@ class BaseWindow(pyglet.window.Window):
         if self.focused_control:
             self.focused_control.on_focus(True)
 
-    def on_close(self):
-        if self.on_closed:
-            self.on_closed()
-        pyglet.window.Window.on_close(self)
-            
 class Control(object):
     def __init__(self, parent_window, x, y, width, height, background_color, foreground_color):
         self.parent_window = parent_window
