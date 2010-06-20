@@ -1,61 +1,40 @@
 '''  interpreter ''' 
 import string
-import threading
 
 class ClientServerInterpreter():
     '''Constants '''
     FIELD_SEPARATOR = '\r\n'
     KEY_SEPARATOR = '='
+    TERMINATOR = FIELD_SEPARATOR + FIELD_SEPARATOR
 
     def __init__(self):
-        self.buffer = ''
-        self.lock = threading.Lock()
-
-        # variables auxiliares
-        self.pos = -1
-        self.message = None
-
         # eventos
         self.on_client_register = None
         self.on_client_update = None
+        self.on_client_unregister = None
 
-    def parse(self, client_token, payload):
-        # guardar el mensaje en el buffer protegido
-        with self.lock:
-            self.buffer += payload
+    def parse(self, token, payload):
+        fields = string.split(payload, self.FIELD_SEPARATOR)
+        dict = {}
+        for i in range(len(fields)):
+            field = string.split(fields[i], self.KEY_SEPARATOR)
+            if len(field) == 0:
+                continue # separador
+            if len(field) < 2:
+                raise Exception('Mensaje mal formado: "%s"' % payload)
+            dict[field[0]] = field[1]
 
-        while True:
-            terminator = self.FIELD_SEPARATOR + self.FIELD_SEPARATOR
-
-            # leer del buffer protegido
-            with self.lock:
-                self.pos = self.buffer.find(terminator)
-                if self.pos == -1:
-                    break
-                self.message = self.buffer[0:self.pos]
-                self.buffer = self.buffer[self.pos + (len(terminator)): len(self.buffer)]
-
-            # seguir procesando normalmente
-            fields = string.split(self.message, self.FIELD_SEPARATOR)
-            dict = {}
-            for i in range(len(fields)):
-                field = string.split(fields[i], self.KEY_SEPARATOR)
-                if len(field) == 0:
-                    continue # separador
-                if len(field) < 2:
-                    raise Exception('Mensaje mal formado', self.message)
-                dict[field[0]] = field[1]
-            try:
-                if dict['command'] == 'register':
-                    if self.on_client_register:
-                        self.on_client_register(client_token, dict['name'])
-                
-                if dict['command'] == 'update':
-                    if self.on_client_update:
-                        self.on_client_update(client_token, dict['direction'])
-            except Exception as e:
-                print e.args
-                print dict
+        if dict['command'] == 'register':
+            if self.on_client_register:
+                self.on_client_register(token, dict['name'])
+        
+        if dict['command'] == 'unregister':
+            if self.on_client_unregister:
+                self.on_client_unregister(token)
+        
+        if dict['command'] == 'update':
+            if self.on_client_update:
+                self.on_client_update(token, dict['direction'])
         
     def build_wait_for_opponent(self):
         message = 'command%swait for opponent%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
@@ -84,10 +63,10 @@ class ClientServerInterpreter():
         return message
 
     def build_game_finished(self, p1_name, p1_score, p2_name, p2_score):
-        message = 'command=game finished'
-        message += 'player1 name%s%d%s' % (self.KEY_SEPARATOR, p1_score, self.FIELD_SEPARATOR)
+        message = 'command%sgame finished%s' % (self.KEY_SEPARATOR, self.FIELD_SEPARATOR)
+        message += 'player1 name%s%s%s' % (self.KEY_SEPARATOR, p1_name, self.FIELD_SEPARATOR)
         message += 'player1 score%s%d%s' % (self.KEY_SEPARATOR, p1_score, self.FIELD_SEPARATOR)
-        message += 'player2 name%s%d%s' % (self.KEY_SEPARATOR, p2_score, self.FIELD_SEPARATOR)
-        message += 'player2 score%s%d%s' % (self.KEY_SEPARATOR, p1_score, self.FIELD_SEPARATOR)
+        message += 'player2 name%s%s%s' % (self.KEY_SEPARATOR, p2_name, self.FIELD_SEPARATOR)
+        message += 'player2 score%s%d%s' % (self.KEY_SEPARATOR, p2_score, self.FIELD_SEPARATOR)
         message += self.FIELD_SEPARATOR
         return message
