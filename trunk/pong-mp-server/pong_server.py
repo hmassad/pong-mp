@@ -7,7 +7,7 @@ import pyglet
 import game_engine
 
 class PongMpServer():
-    NETWORK_TIMEOUT = (1 / 60.)
+    NETWORK_TIMEOUT = (1 / 15.)
 
     def __init__(self):
         self.games = []

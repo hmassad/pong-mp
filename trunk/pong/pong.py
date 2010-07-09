@@ -36,7 +36,7 @@ if __name__ == '__main__':
     def ball_diameter(): return 8
     BALL_DIAMETER = ball_diameter()
     
-    def ball_speed(): return 500
+    def ball_speed(): return 800
     BALL_SPEED = ball_speed()
     
     # crear la ventana

@@ -56,7 +56,8 @@ class GameWindow(BaseWindow):
         self.player2_name_label = pyglet.text.Label(text='player2', x=3 * 800 / 4, y=600 / 2 + 20, anchor_x='center', anchor_y='center', batch=self.batch)
         self.player2_score_label = pyglet.text.Label(text='0', x=3 * 800 / 4, y=600 / 2 - 20, anchor_x='center', anchor_y='center', batch=self.batch)
         
-        self.ball = Ball(self.width / 2, self.height / 2, 8, self.batch)
+        self.direction = "NONE"
+        self.ball = Ball(self.width / 2, self.height / 2, 16, self.batch)
         self.paddle1 = Paddle(4, self.height / 2, 8, 64, self.batch)
         self.paddle2 = Paddle(self.width - 4, self.height / 2, 8, 64, self.batch)
         
@@ -74,16 +75,19 @@ class GameWindow(BaseWindow):
         self.dt_label.text = 'DT: %d' % (int(1 / dt))
         if self.keymap[pyglet.window.key.UP]:
             self.key_label.text = 'KEY: UP'
-            if self.on_updated:
-                self.on_updated('UP')
+            #if self.on_updated:
+            #    self.on_updated('UP')
+            self.direction = "UP"
         elif self.keymap[pyglet.window.key.DOWN]:
             self.key_label.text = 'KEY: DOWN'
-            if self.on_updated:
-                self.on_updated('DOWN')
+            #if self.on_updated:
+            #    self.on_updated('DOWN')
+            self.direction = "DOWN"
         else:
             self.key_label.text = 'KEY: Ninguna'
-            if self.on_updated:
-                self.on_updated('NONE')
+            #if self.on_updated:
+            #    self.on_updated('NONE')
+            self.direction = "NONE"
         
     def draw_snapshot(self, b_x, b_y, p1_x, p1_y, p1_s, p2_x, p2_y, p2_s):
         self.ball.x = int(b_x)
