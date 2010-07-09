@@ -7,13 +7,14 @@ from config_window import ConfigWindow
 from game_window import GameWindow
 
 class Application(object):
-    NETOWRK_TIMEOUT = (1 / 60.)
+    NETOWRK_TIMEOUT = (1 / 30.)
 
     def __init__(self):
         self.config_window = None
         self.game_window = None
 
         self.player_name = None
+        self.host_address = None
 
         self.client_socket = None
 
@@ -44,6 +45,8 @@ class Application(object):
         self.config_window.on_closed = self.config_window_closed
         if self.player_name:
             self.config_window.player_name_textbox.text = self.player_name
+        if self.host_address:
+            self.config_window.server_address_textbox.text = self.host_address
         if old_config_window:
             old_config_window.on_closed = None
             old_config_window.on_configured = None
@@ -57,7 +60,7 @@ class Application(object):
     def __open_game_window(self, timer_interval):
         old_game_window = self.game_window
         self.game_window = GameWindow(timer_interval)
-        self.game_window.on_updated = self.game_window_updated
+#        self.game_window.on_updated = self.game_window_updated
         self.game_window.on_closed = self.game_window_closed
         if old_game_window:
             self.__close_game_window()
@@ -69,6 +72,7 @@ class Application(object):
 
     def config_window_configured(self, player_name, server_address):
         self.player_name = player_name
+        self.host_address = server_address
         
         if not self.client_socket:
             self.client_socket = TCPClient(server_address, 8888, self.NETOWRK_TIMEOUT)
@@ -161,6 +165,13 @@ class Application(object):
             except Exception as e:
                 print 'Exception: type = %s, args = %s, message = %s' % (type(e), e.args, e.message)
 
+        if self.game_window and self.game_window.direction:
+            try:
+                message = self.interpreter.build_direction_change(self.game_window.direction)
+                self.client_socket.send(message)
+            except Exception as e:
+                print 'Exception: type = %s, args = %s, message = %s' % (type(e), e.args, e.message)
+
     def interpreter_game_finished(self, p1_name, p1_score, p2_name, p2_score):
         self.client_socket.close()
         self.client_socket = None
@@ -173,17 +184,18 @@ class Application(object):
         self.__close_game_window()
         print 'game finished'
 
-    def game_window_updated(self, direction):
-        '''
-        se dispara de a intervalos regulares, para enviar el cambio de posicion de la paleta del jugador local
-        @param direction: direccion hacia donde se mueve la paleta
-        '''
-        if self.game_window:
-            try:
-                message = self.interpreter.build_direction_change(direction)
-                self.client_socket.send(message)
-            except Exception as e:
-                print 'Exception: type = %s, args = %s, message = %s' % (type(e), e.args, e.message)
+    #def game_window_updated(self, direction):
+    #    '''
+    #    se dispara de a intervalos regulares, para enviar el cambio de posicion de la paleta del jugador local
+    #    @param direction: direccion hacia donde se mueve la paleta
+    #    '''
+    #    if self.game_window:
+    #        try:
+    #            message = self.interpreter.build_direction_change(direction)
+    #            self.client_socket.send(message)
+    #        except Exception as e:
+    #            print 'Exception: type = %s, args = %s, message = %s' % (type(e), e.args, e.message)
+                
 
     def game_window_closed(self):
         self.__open_config_window()

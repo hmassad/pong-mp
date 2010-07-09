@@ -30,11 +30,17 @@ class Paddle():
         self.direction = 0
 
 class GameState():
+    '''
+    Enum de estado del juego
+    '''
     WAITING_FOR_PLAYERS = 0
     RUNNING = 1
     FINISHED = 2
 
 class Game():
+    '''
+    El modelo fisico en si 
+    '''
     UPDATE_INTERVAL = 1 / 50.
     COURT_WIDTH = 800
     COURT_HEIGHT = 600
